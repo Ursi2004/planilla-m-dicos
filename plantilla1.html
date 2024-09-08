@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Médicos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            width: 100%;
+            background-color: #4CAF50;
+            padding: 10px;
+            text-align: center;
+            color: white;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .container h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .medico-list {
+            margin-top: 20px;
+        }
+        .medico-item {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        .lang-select {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Registro de Médicos</h1>
+        <div class="lang-select">
+            <select id="language" onchange="changeLanguage()">
+                <option value="es">🇪🇸 Español</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="pt">🇵🇹 Português</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Para hacerte la vida más fácil</h2>
+        <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" placeholder="Nombre del médico">
+        </div>
+        <div class="form-group">
+            <label for="apellidos">Apellidos</label>
+            <input type="text" id="apellidos" placeholder="Apellidos del médico">
+        </div>
+        <div class="form-group">
+            <label for="correo">Correo electrónico</label>
+            <input type="email" id="correo" placeholder="Correo del médico">
+        </div>
+        <button class="btn" onclick="agregarMedico()">Aceptar médico</button>
+
+        <div class="medico-list" id="medicoList"></div>
+    </div>
+
+    <script>
+        const medicoList = document.getElementById('medicoList');
+
+        function agregarMedico() {
+            const nombre = document.getElementById('nombre').value;
+            const apellidos = document.getElementById('apellidos').value;
+            const correo = document.getElementById('correo').value;
+
+            if (nombre && apellidos && correo) {
+                const medicoItem = document.createElement('div');
+                medicoItem.classList.add('medico-item');
+                medicoItem.innerHTML = `
+                    <span>${nombre} ${apellidos} - ${correo}</span>
+                    <button class="delete-btn" onclick="eliminarMedico(this)">Eliminar</button>
+                `;
+                medicoList.appendChild(medicoItem);
+
+                document.getElementById('nombre').value = '';
+                document.getElementById('apellidos').value = '';
+                document.getElementById('correo').value = '';
+            } else {
+                alert('Por favor, rellena todos los campos.');
+            }
+        }
+
+        function eliminarMedico(button) {
+            const medicoItem = button.parentElement;
+            medicoList.removeChild(medicoItem);
+        }
+
+        function changeLanguage() {
+            const language = document.getElementById('language').value;
+            alert('Idioma cambiado a ' + language);
+            // Aquí podrías implementar el cambio de idioma según la selección
+        }
+    </script>
+</body>
+</html>
