@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Consultas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        input[type="number"] {
+            width: 60px;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Calendario de Consultas</h2>
+        <div class="form-group">
+            <label for="semana">Seleccionar Semana:</label>
+            <input type="week" id="semana" onchange="generarCalendario()">
+        </div>
+        <div class="form-group">
+            <label for="consulta">Seleccionar Consulta:</label>
+            <select id="consulta" onchange="generarCalendario()"></select>
+        </div>
+        <table id="calendarioTabla">
+            <thead>
+                <tr>
+                    <th>Día</th>
+                    <th>Fecha</th>
+                    <th>Cantidad de Consultas</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Aquí se generarán las filas del calendario -->
+            </tbody>
+        </table>
+        <button class="btn" onclick="guardarAsignaciones()">Guardar Asignaciones</button>
+        <nav>
+            <a href="index.html">Volver al Inicio</a>
+        </nav>
+    </div>
+
+    <script>
+        const semanaInput = document.getElementById('semana');
+        const consultaSelect = document.getElementById('consulta');
+        const calendarioTabla = document.getElementById('calendarioTabla');
+        let asignaciones = {};
+
+        window.onload = function() {
+            cargarConsultas();
+            // Establecer la semana actual como valor predeterminado
+            const hoy = new Date();
+            const inicioSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay() + 1));
+            semanaInput.value = inicioSemana.toISOString().slice(0, 10);
+            generarCalendario();
+        };
+
+        function cargarConsultas() {
+            const consultas = JSON.parse(localStorage.getItem('consultas')) || [];
+            consultaSelect.innerHTML = '<option value="">Seleccione una consulta</option>';
+            consultas.forEach(consulta => {
+                const option = document.createElement('option');
+                option.value = consulta.id;
+                option.textContent = consulta.nombre;
+                consultaSelect.appendChild(option);
+            });
+        }
+
+        function generarCalendario() {
+            const semana = semanaInput.value;
+            const consultaId = consultaSelect.value;
+            if (!semana || !consultaId) return;
+
+            const fechaInicio = new Date(semana);
+            const tbody = calendarioTabla.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            for (let i = 0; i < 6; i++) {  // Lunes a Sábado
+                const fecha = new Date(fechaInicio);
+                fecha.setDate(fechaInicio.getDate() + i);
+                const fechaStr = fecha.toISOString().slice(0, 10);
+                const dia = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][i];
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${dia}</td>
+                    <td>${fechaStr}</td>
+                    <td><input type="number" min="0" value="${asignaciones[consultaId]?.[fechaStr] || 0}" onchange="actualizarAsignacion('${consultaId}', '${fechaStr}', this.value)"></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function actualizarAsignacion(consultaId, fecha, cantidad) {
+            if (!asignaciones[consultaId]) {
+                asignaciones[consultaId] = {};
+            }
+            asignaciones[consultaId][fecha] = parseInt(cantidad);
+        }
+
+        function guardarAsignaciones() {
+            localStorage.setItem('asignacionesConsultas', JSON.stringify(asignaciones));
+            alert('Asignaciones guardadas correctamente');
+        }
+
+        // Cargar asignaciones existentes al iniciar
+        asignaciones = JSON.parse(localStorage.getItem('asignacionesConsultas')) || {};
+    </script>
+</body>
+</html>
