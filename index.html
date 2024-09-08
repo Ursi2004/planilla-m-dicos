@@ -5,81 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Médicos</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        header {
-            width: 100%;
-            background-color: #4CAF50;
-            padding: 10px;
-            text-align: center;
-            color: white;
-        }
-        .container {
-            margin-top: 20px;
-            max-width: 600px;
-            width: 100%;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .container h2 {
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .btn {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #45a049;
-        }
-        .medico-list {
-            margin-top: 20px;
-        }
-        .medico-item {
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .delete-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            cursor: pointer;
-            padding: 5px 10px;
-        }
+        /* ... (estilos existentes) ... */
         nav {
             margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         nav a {
-            margin: 0 10px;
+            margin: 10px;
+            padding: 10px 15px;
             text-decoration: none;
-            color: #4CAF50;
+            color: white;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        nav a:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
@@ -90,98 +33,18 @@
 
     <div class="container">
         <h2>Para hacerte la vida más fácil</h2>
-        <div class="form-group">
-            <label for="nombre">Nombre</label>
-            <input type="text" id="nombre" placeholder="Nombre del médico">
-        </div>
-        <div class="form-group">
-            <label for="apellidos">Apellidos</label>
-            <input type="text" id="apellidos" placeholder="Apellidos del médico">
-        </div>
-        <div class="form-group">
-            <label for="correo">Correo electrónico</label>
-            <input type="email" id="correo" placeholder="Correo del médico">
-        </div>
-        <button class="btn" onclick="agregarMedico()">Aceptar médico</button>
-
-        <div class="medico-list" id="medicoList"></div>
+        <!-- ... (contenido existente) ... -->
 
         <nav>
-            <a href="subespecialidades.html">Ir a Subespecialidades</a><br><br>
-            <a href="consultas.html">Crear Consultas</a><br><br>
-            <a href="calendario.html">Calendario Interactivo</a> <!-- Enlace añadido para el calendario -->
+            <a href="subespecialidades.html">Subespecialidades</a>
+            <a href="consultas.html">Crear Consultas</a>
+            <a href="calendario.html">Calendario Interactivo</a>
+            <a href="calendario-consultas.html">Calendario de Consultas</a>
         </nav>
     </div>
 
     <script>
-        const medicoList = document.getElementById('medicoList');
-
-        // Cargar médicos guardados en localStorage al iniciar la página
-        window.onload = function() {
-            cargarMedicos();
-        };
-
-        function agregarMedico() {
-            const nombre = document.getElementById('nombre').value;
-            const apellidos = document.getElementById('apellidos').value;
-            const correo = document.getElementById('correo').value;
-
-            if (nombre && apellidos && correo) {
-                const medico = { nombre, apellidos, correo };
-                
-                // Guardar médico en localStorage
-                let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-                medicos.push(medico);
-                localStorage.setItem('medicos', JSON.stringify(medicos));
-
-                // Asignar "Pediatría General" como subespecialidad predeterminada
-                let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-                subespecialidadesMedicos[correo] = ["Pediatría General"];
-                localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
-
-                // Mostrar médico en la lista
-                mostrarMedico(medico);
-
-                // Limpiar los campos del formulario
-                document.getElementById('nombre').value = '';
-                document.getElementById('apellidos').value = '';
-                document.getElementById('correo').value = '';
-            } else {
-                alert('Por favor, rellena todos los campos.');
-            }
-        }
-
-        function mostrarMedico(medico) {
-            const medicoItem = document.createElement('div');
-            medicoItem.classList.add('medico-item');
-            medicoItem.innerHTML = `
-                <span>${medico.nombre} ${medico.apellidos} - ${medico.correo}</span>
-                <button class="delete-btn" onclick="eliminarMedico('${medico.correo}')">Eliminar</button>
-            `;
-            medicoList.appendChild(medicoItem);
-        }
-
-        function cargarMedicos() {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicos.forEach(medico => {
-                mostrarMedico(medico);
-            });
-        }
-
-        function eliminarMedico(correo) {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicos = medicos.filter(m => m.correo !== correo);
-            localStorage.setItem('medicos', JSON.stringify(medicos));
-
-            // También eliminamos las subespecialidades asignadas
-            let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            delete subespecialidadesMedicos[correo];
-            localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
-
-            // Recargar la lista de médicos
-            medicoList.innerHTML = '';
-            cargarMedicos();
-        }
+        // ... (script existente) ...
     </script>
 </body>
 </html>
