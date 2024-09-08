@@ -33,7 +33,7 @@
             margin-bottom: 5px;
         }
         .form-group select {
-            width: 100px;
+            width: 150px;
             padding: 10px;
         }
         .calendario {
@@ -126,16 +126,17 @@
         const calendarioDiv = document.getElementById('calendario');
         const mesSelect = document.getElementById('mes');
         const anioSelect = document.getElementById('anio');
-        let calendarioSeleccion = {};
+        let calendarioSeleccion = {};  // Aquí se almacenarán las selecciones del calendario
 
-        // Cargar médicos de localStorage al cargar la página
+        // Cargar médicos de LocalStorage al cargar la página
         window.onload = function() {
             cargarMedicos();
             cargarAnios();
         };
 
+        // Cargar los médicos de localStorage
         function cargarMedicos() {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
             medicoSelect.innerHTML = '';  // Limpiar el menú desplegable
             medicos.forEach(medico => {
                 const option = document.createElement('option');
@@ -146,6 +147,7 @@
             generarCalendario();  // Generar el calendario inicial
         }
 
+        // Cargar los años en el desplegable
         function cargarAnios() {
             const anioActual = new Date().getFullYear();
             for (let i = anioActual - 10; i <= anioActual + 10; i++) {
@@ -157,6 +159,7 @@
             anioSelect.value = anioActual;  // Seleccionar el año actual
         }
 
+        // Generar el calendario dependiendo del médico, mes y año seleccionados
         function generarCalendario() {
             const mes = parseInt(mesSelect.value);
             const anio = parseInt(anioSelect.value);
@@ -185,6 +188,7 @@
             const key = `${correoMedico}-${mes}-${anio}`;
             calendarioSeleccion = JSON.parse(localStorage.getItem(key)) || {};
 
+            // Generar el calendario
             for (let i = 0; i < 6 * 7; i++) {
                 const diaDiv = document.createElement('div');
                 diaDiv.classList.add('day');
@@ -202,7 +206,7 @@
                         diaDiv.classList.add('weekend');  // Sábados y domingos
                     }
 
-                    // Restaurar selección guardada
+                    // Restaurar la selección guardada
                     if (calendarioSeleccion[diaActual] === 'rojo') {
                         diaDiv.classList.add('selected-red');
                     } else if (calendarioSeleccion[diaActual] === 'amarillo') {
@@ -231,6 +235,7 @@
             }
         }
 
+        // Guardar las selecciones de cada médico en LocalStorage
         function guardarCambios() {
             const correoMedico = medicoSelect.value;
             const mes = mesSelect.value;
@@ -241,7 +246,7 @@
                 return;
             }
 
-            // Guardar la selección del calendario en localStorage
+            // Guardar la selección del calendario en LocalStorage
             const key = `${correoMedico}-${mes}-${anio}`;
             localStorage.setItem(key, JSON.stringify(calendarioSeleccion));
             alert("Cambios guardados correctamente.");
