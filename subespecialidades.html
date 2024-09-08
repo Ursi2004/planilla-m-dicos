@@ -47,10 +47,10 @@
         .btn:hover {
             background-color: #45a049;
         }
-        .medico-list, .subespecialidades-list {
+        .subespecialidades-list {
             margin-top: 20px;
         }
-        .medico-item, .subespecialidad-item {
+        .subespecialidad-item {
             padding: 10px;
             background-color: #f9f9f9;
             border: 1px solid #ddd;
@@ -136,10 +136,12 @@
             }
 
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+
             if (!subespecialidadesMedicos[correoMedico]) {
                 subespecialidadesMedicos[correoMedico] = ["Pediatría General"];
             }
 
+            // Evitar duplicados y añadir subespecialidades seleccionadas
             subespecialidadesMedicos[correoMedico] = [...new Set([...subespecialidadesMedicos[correoMedico], ...subespecialidadesSeleccionadas])];
             localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
 
@@ -171,10 +173,18 @@
 
         function eliminarSubespecialidad(correo, subespecialidad) {
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            
-            if (subespecialidadesMedicos[correo].includes(subespecialidad)) {
+
+            if (subespecialidadesMedicos[correo]) {
+                // Si queda una sola subespecialidad, no permitimos eliminar "Pediatría General"
+                if (subespecialidadesMedicos[correo].length === 1 && subespecialidadesMedicos[correo].includes("Pediatría General")) {
+                    alert("No puedes eliminar la subespecialidad predeterminada.");
+                    return;
+                }
+
+                // Filtramos la subespecialidad seleccionada
                 subespecialidadesMedicos[correo] = subespecialidadesMedicos[correo].filter(sub => sub !== subespecialidad);
 
+                // Si eliminamos todas las subespecialidades, dejamos "Pediatría General" como predeterminada
                 if (subespecialidadesMedicos[correo].length === 0) {
                     subespecialidadesMedicos[correo].push("Pediatría General");
                 }
