@@ -5,80 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario Interactivo</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
+        /* ... (mantener los estilos existentes) ... */
+        .legend {
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
             align-items: center;
-        }
-        .container {
-            margin-top: 20px;
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group select {
-            width: 150px;
-            padding: 10px;
-        }
-        .calendario {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            grid-gap: 10px;
-            margin-top: 20px;
-        }
-        .calendario div {
-            padding: 15px;
-            text-align: center;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            cursor: pointer;
-        }
-        .calendario .header {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-        }
-        .calendario .weekend {
-            background-color: #d3e0ff;
-        }
-        .calendario .selected-red {
-            background-color: #ffcccc !important;
-        }
-        .calendario .selected-yellow {
-            background-color: #ffffcc !important;
-        }
-        .btn-save {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        nav {
-            margin-top: 20px;
-        }
-        nav a {
             margin: 0 10px;
-            text-decoration: none;
-            color: #4CAF50;
         }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        .red { background-color: #ffcccc; }
+        .yellow { background-color: #ffffcc; }
     </style>
 </head>
 <body>
@@ -86,35 +30,32 @@
         <h2>Calendario Interactivo - Selección de Disponibilidad</h2>
         <div class="form-group">
             <label for="medico">Seleccionar Médico:</label>
-            <select id="medico" onchange="generarCalendario()"></select>
+            <select id="medico" onchange="cargarCalendario()"></select>
         </div>
         <div class="form-group">
             <label for="mes">Mes:</label>
             <select id="mes" onchange="generarCalendario()">
-                <option value="0">Enero</option>
-                <option value="1">Febrero</option>
-                <option value="2">Marzo</option>
-                <option value="3">Abril</option>
-                <option value="4">Mayo</option>
-                <option value="5">Junio</option>
-                <option value="6">Julio</option>
-                <option value="7">Agosto</option>
-                <option value="8">Septiembre</option>
-                <option value="9">Octubre</option>
-                <option value="10">Noviembre</option>
-                <option value="11">Diciembre</option>
+                <!-- ... (mantener las opciones de mes) ... -->
             </select>
 
             <label for="anio">Año:</label>
             <select id="anio" onchange="generarCalendario()"></select>
         </div>
 
-        <!-- Botón para guardar los cambios -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color red"></div>
+                <span>No disponible</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color yellow"></div>
+                <span>Preferencia de no trabajar</span>
+            </div>
+        </div>
+
         <button class="btn-save" onclick="guardarCambios()">Guardar cambios</button>
 
-        <div class="calendario" id="calendario">
-            <!-- Aquí se generará el calendario -->
-        </div>
+        <div class="calendario" id="calendario"></div>
 
         <nav>
             <a href="index.html">Volver al Inicio</a>
@@ -126,28 +67,26 @@
         const calendarioDiv = document.getElementById('calendario');
         const mesSelect = document.getElementById('mes');
         const anioSelect = document.getElementById('anio');
-        let calendarioSeleccion = {};  // Aquí se almacenarán las selecciones del calendario
+        let calendarioSeleccion = {};
+        let seleccionInicio = null;
 
-        // Cargar médicos de LocalStorage al cargar la página
         window.onload = function() {
             cargarMedicos();
             cargarAnios();
+            cargarCalendario();
         };
 
-        // Cargar los médicos de localStorage
         function cargarMedicos() {
             const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicoSelect.innerHTML = '';  // Limpiar el menú desplegable
+            medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
             medicos.forEach(medico => {
                 const option = document.createElement('option');
                 option.value = medico.correo;
                 option.textContent = `${medico.nombre} ${medico.apellidos}`;
                 medicoSelect.appendChild(option);
             });
-            generarCalendario();  // Generar el calendario inicial
         }
 
-        // Cargar los años en el desplegable
         function cargarAnios() {
             const anioActual = new Date().getFullYear();
             for (let i = anioActual - 10; i <= anioActual + 10; i++) {
@@ -156,99 +95,103 @@
                 option.textContent = i;
                 anioSelect.appendChild(option);
             }
-            anioSelect.value = anioActual;  // Seleccionar el año actual
+            anioSelect.value = anioActual;
         }
 
-        // Generar el calendario dependiendo del médico, mes y año seleccionados
+        function cargarCalendario() {
+            const correoMedico = medicoSelect.value;
+            if (correoMedico) {
+                calendarioSeleccion = JSON.parse(localStorage.getItem(correoMedico)) || {};
+            } else {
+                calendarioSeleccion = {};
+            }
+            generarCalendario();
+        }
+
         function generarCalendario() {
             const mes = parseInt(mesSelect.value);
             const anio = parseInt(anioSelect.value);
             const correoMedico = medicoSelect.value;
 
-            if (!correoMedico) return;  // No hay médico seleccionado, no generar el calendario
+            if (!correoMedico) {
+                calendarioDiv.innerHTML = '<p>Por favor, seleccione un médico.</p>';
+                return;
+            }
 
-            // Limpiar el calendario antes de generarlo
-            calendarioDiv.innerHTML = '';
-
-            // Crear los encabezados del calendario (días de la semana)
             const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-            diasSemana.forEach(dia => {
-                const headerDiv = document.createElement('div');
-                headerDiv.textContent = dia;
-                headerDiv.classList.add('header');
-                calendarioDiv.appendChild(headerDiv);
-            });
-
             const primerDia = new Date(anio, mes, 1).getDay();
             const ultimoDia = new Date(anio, mes + 1, 0).getDate();
+
+            let calendarioHTML = diasSemana.map(dia => `<div class="header">${dia}</div>`).join('');
+
             let diaActual = 1;
-            let iniciado = false;
-
-            // Generar una clave única basada en el médico, mes y año
-            const key = `${correoMedico}-${mes}-${anio}`;
-            calendarioSeleccion = JSON.parse(localStorage.getItem(key)) || {};
-
-            // Generar el calendario
-            for (let i = 0; i < 6 * 7; i++) {
-                const diaDiv = document.createElement('div');
-                diaDiv.classList.add('day');
-
-                // Rellenar espacios antes del primer día del mes
-                if (!iniciado && (i % 7 === (primerDia === 0 ? 6 : primerDia - 1))) {
-                    iniciado = true;
-                }
-
-                if (iniciado && diaActual <= ultimoDia) {
-                    diaDiv.textContent = diaActual;
-
-                    const diaSemana = i % 7;
-                    if (diaSemana === 5 || diaSemana === 6) {
-                        diaDiv.classList.add('weekend');  // Sábados y domingos
-                    }
-
-                    // Restaurar la selección guardada
-                    if (calendarioSeleccion[diaActual] === 'rojo') {
-                        diaDiv.classList.add('selected-red');
-                    } else if (calendarioSeleccion[diaActual] === 'amarillo') {
-                        diaDiv.classList.add('selected-yellow');
-                    }
-
-                    // Hacer que cada día sea clicable
-                    diaDiv.onclick = function() {
-                        if (diaDiv.classList.contains('selected-red')) {
-                            diaDiv.classList.remove('selected-red');
-                            diaDiv.classList.add('selected-yellow');
-                            calendarioSeleccion[diaActual] = 'amarillo';
-                        } else if (diaDiv.classList.contains('selected-yellow')) {
-                            diaDiv.classList.remove('selected-yellow');
-                            delete calendarioSeleccion[diaActual];  // Eliminar la selección
-                        } else {
-                            diaDiv.classList.add('selected-red');
-                            calendarioSeleccion[diaActual] = 'rojo';
-                        }
-                    };
-
+            for (let i = 0; i < 42; i++) {
+                if (i < (primerDia === 0 ? 6 : primerDia - 1) || diaActual > ultimoDia) {
+                    calendarioHTML += '<div></div>';
+                } else {
+                    const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${diaActual.toString().padStart(2, '0')}`;
+                    const clase = calendarioSeleccion[fecha] === 'rojo' ? 'selected-red' : 
+                                  calendarioSeleccion[fecha] === 'amarillo' ? 'selected-yellow' : '';
+                    const esFinDeSemana = i % 7 === 5 || i % 7 === 6 ? 'weekend' : '';
+                    calendarioHTML += `<div class="day ${esFinDeSemana} ${clase}" data-fecha="${fecha}">${diaActual}</div>`;
                     diaActual++;
                 }
+            }
 
-                calendarioDiv.appendChild(diaDiv);
+            calendarioDiv.innerHTML = calendarioHTML;
+
+            calendarioDiv.addEventListener('mousedown', iniciarSeleccion);
+            calendarioDiv.addEventListener('mouseover', continuarSeleccion);
+            calendarioDiv.addEventListener('mouseup', finalizarSeleccion);
+        }
+
+        function iniciarSeleccion(e) {
+            if (e.target.classList.contains('day')) {
+                seleccionInicio = e.target.dataset.fecha;
             }
         }
 
-        // Guardar las selecciones de cada médico en LocalStorage
+        function continuarSeleccion(e) {
+            if (seleccionInicio && e.target.classList.contains('day')) {
+                const fechaActual = e.target.dataset.fecha;
+                aplicarSeleccion(seleccionInicio, fechaActual);
+            }
+        }
+
+        function finalizarSeleccion() {
+            seleccionInicio = null;
+        }
+
+        function aplicarSeleccion(inicio, fin) {
+            const fechaInicio = new Date(inicio);
+            const fechaFin = new Date(fin);
+            const dias = document.querySelectorAll('.day');
+
+            dias.forEach(dia => {
+                const fecha = new Date(dia.dataset.fecha);
+                if (fecha >= fechaInicio && fecha <= fechaFin) {
+                    if (dia.classList.contains('selected-red')) {
+                        dia.classList.remove('selected-red');
+                        dia.classList.add('selected-yellow');
+                        calendarioSeleccion[dia.dataset.fecha] = 'amarillo';
+                    } else if (dia.classList.contains('selected-yellow')) {
+                        dia.classList.remove('selected-yellow');
+                        delete calendarioSeleccion[dia.dataset.fecha];
+                    } else {
+                        dia.classList.add('selected-red');
+                        calendarioSeleccion[dia.dataset.fecha] = 'rojo';
+                    }
+                }
+            });
+        }
+
         function guardarCambios() {
             const correoMedico = medicoSelect.value;
-            const mes = mesSelect.value;
-            const anio = anioSelect.value;
-
             if (!correoMedico) {
                 alert("Por favor, selecciona un médico.");
                 return;
             }
-
-            // Guardar la selección del calendario en LocalStorage
-            const key = `${correoMedico}-${mes}-${anio}`;
-            localStorage.setItem(key, JSON.stringify(calendarioSeleccion));
+            localStorage.setItem(correoMedico, JSON.stringify(calendarioSeleccion));
             alert("Cambios guardados correctamente.");
         }
     </script>
