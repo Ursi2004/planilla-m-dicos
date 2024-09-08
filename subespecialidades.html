@@ -90,9 +90,9 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="subespecialidades">Seleccionar Subespecialidades:</label>
+            <label for="subespecialidades">Seleccionar Subespecialidades Adicionales:</label>
             <select id="subespecialidades" multiple>
-                <option value="Pediatría General" selected>Pediatría General</option>
+                <!-- "Pediatría General" no se incluye porque ya es predeterminada -->
                 <option value="Endocrinología pediátrica">Endocrinología pediátrica</option>
                 <option value="Neumología pediátrica">Neumología pediátrica</option>
                 <option value="Neurología pediátrica">Neurología pediátrica</option>
@@ -125,9 +125,8 @@
 
         function cargarMedicos() {
             let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicoList.innerHTML = '';  // Asegúrate de limpiar el menú desplegable antes de agregar nuevos médicos
+            medicoList.innerHTML = '';  // Limpiar el menú desplegable antes de agregar nuevos médicos
             if (medicos.length === 0) {
-                // Mostrar un mensaje si no hay médicos registrados
                 const noMedicos = document.createElement('option');
                 noMedicos.textContent = 'No hay médicos registrados';
                 noMedicos.disabled = true;
@@ -153,8 +152,15 @@
 
             // Guardar las subespecialidades en localStorage
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+
+            // Agregar "Pediatría General" como predeterminada
+            if (!subespecialidadesMedicos[correoMedico]) {
+                subespecialidadesMedicos[correoMedico] = ["Pediatría General"];
+            }
+
+            // Agregar las subespecialidades seleccionadas a las existentes, evitando duplicados
+            subespecialidadesMedicos[correoMedico] = [...new Set([...subespecialidadesMedicos[correoMedico], ...subespecialidadesSeleccionadas])];
             
-            subespecialidadesMedicos[correoMedico] = subespecialidadesSeleccionadas;
             localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
 
             // Actualizar la lista de subespecialidades
@@ -197,3 +203,4 @@
     </script>
 </body>
 </html>
+
