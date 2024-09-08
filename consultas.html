@@ -57,6 +57,16 @@
             background-color: #f9f9f9;
             border: 1px solid #ddd;
             margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
         }
         nav {
             margin-top: 20px;
@@ -142,6 +152,7 @@
 
             let consultas = JSON.parse(localStorage.getItem('consultas')) || [];
             const consulta = {
+                id: Date.now(),  // Usamos un ID único basado en la hora actual
                 nombre: consultaNombre,
                 inicio: horaInicio,
                 fin: horaFin
@@ -154,7 +165,7 @@
 
         function cargarConsultas() {
             let consultas = JSON.parse(localStorage.getItem('consultas')) || [];
-            
+
             // Ordenar las consultas alfabéticamente por su nombre
             consultas.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
@@ -170,10 +181,21 @@
             const consultaItem = document.createElement('div');
             consultaItem.classList.add('consulta-item');
             consultaItem.innerHTML = `
-                <strong>Consulta:</strong> ${consulta.nombre} <br>
-                <strong>Horario:</strong> ${consulta.inicio} - ${consulta.fin}
+                <div>
+                    <strong>Consulta:</strong> ${consulta.nombre} <br>
+                    <strong>Horario:</strong> ${consulta.inicio} - ${consulta.fin}
+                </div>
+                <button class="delete-btn" onclick="eliminarConsulta(${consulta.id})">Eliminar</button>
             `;
             consultasList.appendChild(consultaItem);
+        }
+
+        function eliminarConsulta(id) {
+            let consultas = JSON.parse(localStorage.getItem('consultas')) || [];
+            // Filtrar la consulta por ID para eliminarla
+            consultas = consultas.filter(consulta => consulta.id !== id);
+            localStorage.setItem('consultas', JSON.stringify(consultas));
+            cargarConsultas();  // Recargar la lista
         }
     </script>
 </body>
