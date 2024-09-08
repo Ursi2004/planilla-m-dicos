@@ -162,7 +162,14 @@
             const anio = parseInt(anioSelect.value);
             const correoMedico = medicoSelect.value;
 
-            calendarioDiv.innerHTML = '';  // Limpiar calendario
+            if (!correoMedico) {
+                return;  // No hay médico seleccionado, no generar el calendario
+            }
+
+            // Limpiar el calendario antes de generarlo
+            calendarioDiv.innerHTML = '';
+
+            // Crear los encabezados del calendario (días de la semana)
             const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
             diasSemana.forEach(dia => {
                 const headerDiv = document.createElement('div');
@@ -176,7 +183,7 @@
             let diaActual = 1;
             let iniciado = false;
 
-            // Cargar preferencias guardadas
+            // Generar una clave única basada en el médico, mes y año
             const key = `${correoMedico}-${mes}-${anio}`;
             calendarioSeleccion = JSON.parse(localStorage.getItem(key)) || {};
 
@@ -184,25 +191,27 @@
                 const diaDiv = document.createElement('div');
                 diaDiv.classList.add('day');
 
-                // Rellenar con espacios antes del primer día
+                // Rellenar espacios antes del primer día del mes
                 if (!iniciado && (i % 7 === (primerDia === 0 ? 6 : primerDia - 1))) {
                     iniciado = true;
                 }
 
                 if (iniciado && diaActual <= ultimoDia) {
                     diaDiv.textContent = diaActual;
-                    const diaSemana = (i % 7);
+
+                    const diaSemana = i % 7;
                     if (diaSemana === 5 || diaSemana === 6) {
                         diaDiv.classList.add('weekend');  // Sábados y domingos
                     }
 
-                    // Restaurar selección guardada (rojo o amarillo)
+                    // Restaurar selección guardada
                     if (calendarioSeleccion[diaActual] === 'rojo') {
                         diaDiv.classList.add('selected-red');
                     } else if (calendarioSeleccion[diaActual] === 'amarillo') {
                         diaDiv.classList.add('selected-yellow');
                     }
 
+                    // Hacer que cada día sea clicable
                     diaDiv.onclick = function() {
                         if (diaDiv.classList.contains('selected-red')) {
                             diaDiv.classList.remove('selected-red');
@@ -210,12 +219,13 @@
                             calendarioSeleccion[diaActual] = 'amarillo';
                         } else if (diaDiv.classList.contains('selected-yellow')) {
                             diaDiv.classList.remove('selected-yellow');
-                            delete calendarioSeleccion[diaActual];  // Borrar selección
+                            delete calendarioSeleccion[diaActual];  // Eliminar la selección
                         } else {
                             diaDiv.classList.add('selected-red');
                             calendarioSeleccion[diaActual] = 'rojo';
                         }
                     };
+
                     diaActual++;
                 }
 
@@ -223,16 +233,20 @@
             }
         }
 
-        // Función para guardar las preferencias de cada médico
         function guardarCambios() {
             const correoMedico = medicoSelect.value;
             const mes = mesSelect.value;
             const anio = anioSelect.value;
 
-            // Guardar en localStorage con una clave única por médico, mes y año
+            if (!correoMedico) {
+                alert("Por favor, selecciona un médico.");
+                return;
+            }
+
+            // Guardar la selección del calendario en localStorage
             const key = `${correoMedico}-${mes}-${anio}`;
             localStorage.setItem(key, JSON.stringify(calendarioSeleccion));
-            alert('Cambios guardados con éxito.');
+            alert("Cambios guardados correctamente.");
         }
     </script>
 </body>
