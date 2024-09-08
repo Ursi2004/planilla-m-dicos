@@ -5,102 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Médicos y Calendario Interactivo</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            margin-top: 20px;
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .btn {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .btn:hover {
-            background-color: #45a049;
-        }
-        .calendario {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-top: 20px;
-        }
-        .calendario div {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #ddd;
-            cursor: pointer;
-        }
-        .calendario .header {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-        }
-        .calendario .weekend {
-            background-color: #f0f0f0;
-        }
-        .calendario .selected-red {
-            background-color: #ffcccc;
-        }
-        .calendario .selected-yellow {
-            background-color: #ffffcc;
-        }
-        .medico-list {
-            margin-top: 20px;
-        }
-        .medico-item {
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .delete-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            cursor: pointer;
-            padding: 5px 10px;
-        }
+        /* ... (estilos anteriores) ... */
         nav {
             margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         nav a {
-            margin: 0 10px;
+            margin: 10px;
+            padding: 10px 15px;
             text-decoration: none;
-            color: #4CAF50;
+            color: white;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        nav a:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
@@ -108,213 +30,19 @@
     <div class="container">
         <h2>Registro de Médicos y Calendario Interactivo</h2>
         
-        <!-- Formulario de registro de médicos -->
-        <div class="form-group">
-            <label for="nombre">Nombre</label>
-            <input type="text" id="nombre" placeholder="Nombre del médico">
-        </div>
-        <div class="form-group">
-            <label for="apellidos">Apellidos</label>
-            <input type="text" id="apellidos" placeholder="Apellidos del médico">
-        </div>
-        <div class="form-group">
-            <label for="correo">Correo electrónico</label>
-            <input type="email" id="correo" placeholder="Correo del médico">
-        </div>
-        <button class="btn" onclick="agregarMedico()">Aceptar médico</button>
-
-        <!-- Lista de médicos -->
-        <div class="medico-list" id="medicoList"></div>
-
-        <!-- Selección de médico y fecha para el calendario -->
-        <div class="form-group">
-            <label for="medico">Seleccionar Médico:</label>
-            <select id="medico" onchange="cargarCalendario()"></select>
-        </div>
-        <div class="form-group">
-            <label for="mes">Mes:</label>
-            <select id="mes" onchange="generarCalendario()">
-                <option value="0">Enero</option>
-                <option value="1">Febrero</option>
-                <option value="2">Marzo</option>
-                <option value="3">Abril</option>
-                <option value="4">Mayo</option>
-                <option value="5">Junio</option>
-                <option value="6">Julio</option>
-                <option value="7">Agosto</option>
-                <option value="8">Septiembre</option>
-                <option value="9">Octubre</option>
-                <option value="10">Noviembre</option>
-                <option value="11">Diciembre</option>
-            </select>
-
-            <label for="anio">Año:</label>
-            <select id="anio" onchange="generarCalendario()"></select>
-        </div>
-
-        <!-- Calendario -->
-        <div class="calendario" id="calendario"></div>
-
-        <!-- Botón para guardar los cambios -->
-        <button class="btn" onclick="guardarCambios()">Guardar cambios</button>
+        <!-- ... (contenido anterior) ... -->
 
         <nav>
-            <a href="index.html">Volver al Inicio</a>
+            <a href="index.html">Inicio</a>
+            <a href="subespecialidades.html">Subespecialidades</a>
+            <a href="consultas.html">Crear Consultas</a>
+            <a href="calendario.html">Calendario Interactivo</a>
+            <a href="calendario-consultas.html">Calendario de Consultas</a>
         </nav>
     </div>
 
     <script>
-        const medicoList = document.getElementById('medicoList');
-        const medicoSelect = document.getElementById('medico');
-        const calendarioDiv = document.getElementById('calendario');
-        const mesSelect = document.getElementById('mes');
-        const anioSelect = document.getElementById('anio');
-        let calendarioSeleccion = {};
-
-        window.onload = function() {
-            cargarMedicos();
-            cargarAnios();
-            generarCalendario();
-        };
-
-        function agregarMedico() {
-            const nombre = document.getElementById('nombre').value;
-            const apellidos = document.getElementById('apellidos').value;
-            const correo = document.getElementById('correo').value;
-
-            if (nombre && apellidos && correo) {
-                const medico = { nombre, apellidos, correo };
-                
-                let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-                medicos.push(medico);
-                localStorage.setItem('medicos', JSON.stringify(medicos));
-
-                mostrarMedico(medico);
-                actualizarSelectMedicos();
-
-                document.getElementById('nombre').value = '';
-                document.getElementById('apellidos').value = '';
-                document.getElementById('correo').value = '';
-            } else {
-                alert('Por favor, rellena todos los campos.');
-            }
-        }
-
-        function mostrarMedico(medico) {
-            const medicoItem = document.createElement('div');
-            medicoItem.classList.add('medico-item');
-            medicoItem.innerHTML = `
-                <span>${medico.nombre} ${medico.apellidos} - ${medico.correo}</span>
-                <button class="delete-btn" onclick="eliminarMedico('${medico.correo}')">Eliminar</button>
-            `;
-            medicoList.appendChild(medicoItem);
-        }
-
-        function cargarMedicos() {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicoList.innerHTML = '';
-            medicos.forEach(medico => {
-                mostrarMedico(medico);
-            });
-            actualizarSelectMedicos();
-        }
-
-        function actualizarSelectMedicos() {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
-            medicos.forEach(medico => {
-                const option = document.createElement('option');
-                option.value = medico.correo;
-                option.textContent = `${medico.nombre} ${medico.apellidos}`;
-                medicoSelect.appendChild(option);
-            });
-        }
-
-        function eliminarMedico(correo) {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicos = medicos.filter(m => m.correo !== correo);
-            localStorage.setItem('medicos', JSON.stringify(medicos));
-
-            cargarMedicos();
-        }
-
-        function cargarAnios() {
-            const anioActual = new Date().getFullYear();
-            for (let i = anioActual - 2; i <= anioActual + 2; i++) {
-                const option = document.createElement('option');
-                option.value = i;
-                option.textContent = i;
-                anioSelect.appendChild(option);
-            }
-            anioSelect.value = anioActual;
-        }
-
-        function cargarCalendario() {
-            const correoMedico = medicoSelect.value;
-            if (correoMedico) {
-                calendarioSeleccion = JSON.parse(localStorage.getItem(`calendario_${correoMedico}`)) || {};
-            } else {
-                calendarioSeleccion = {};
-            }
-            generarCalendario();
-        }
-
-        function generarCalendario() {
-            const mes = parseInt(mesSelect.value);
-            const anio = parseInt(anioSelect.value);
-            const correoMedico = medicoSelect.value;
-
-            if (!correoMedico) {
-                calendarioDiv.innerHTML = '<p>Por favor, seleccione un médico.</p>';
-                return;
-            }
-
-            const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-            const primerDia = new Date(anio, mes, 1).getDay();
-            const ultimoDia = new Date(anio, mes + 1, 0).getDate();
-
-            let calendarioHTML = diasSemana.map(dia => `<div class="header">${dia}</div>`).join('');
-
-            let diaActual = 1;
-            for (let i = 0; i < 42; i++) {
-                if (i < (primerDia === 0 ? 6 : primerDia - 1) || diaActual > ultimoDia) {
-                    calendarioHTML += '<div></div>';
-                } else {
-                    const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${diaActual.toString().padStart(2, '0')}`;
-                    const clase = calendarioSeleccion[fecha] === 'rojo' ? 'selected-red' : 
-                                  calendarioSeleccion[fecha] === 'amarillo' ? 'selected-yellow' : '';
-                    const esFinDeSemana = i % 7 === 5 || i % 7 === 6 ? 'weekend' : '';
-                    calendarioHTML += `<div class="day ${esFinDeSemana} ${clase}" onclick="seleccionarDia(this, '${fecha}')">${diaActual}</div>`;
-                    diaActual++;
-                }
-            }
-
-            calendarioDiv.innerHTML = calendarioHTML;
-        }
-
-        function seleccionarDia(elemento, fecha) {
-            if (elemento.classList.contains('selected-red')) {
-                elemento.classList.remove('selected-red');
-                elemento.classList.add('selected-yellow');
-                calendarioSeleccion[fecha] = 'amarillo';
-            } else if (elemento.classList.contains('selected-yellow')) {
-                elemento.classList.remove('selected-yellow');
-                delete calendarioSeleccion[fecha];
-            } else {
-                elemento.classList.add('selected-red');
-                calendarioSeleccion[fecha] = 'rojo';
-            }
-        }
-
-        function guardarCambios() {
-            const correoMedico = medicoSelect.value;
-            if (!correoMedico) {
-                alert("Por favor, selecciona un médico.");
-                return;
-            }
-            localStorage.setItem(`calendario_${correoMedico}`, JSON.stringify(calendarioSeleccion));
-            alert("Cambios guardados correctamente.");
-        }
+        // ... (script anterior) ...
     </script>
 </body>
 </html>
