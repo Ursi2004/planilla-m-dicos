@@ -125,12 +125,21 @@
 
         function cargarMedicos() {
             let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicos.forEach(medico => {
-                const option = document.createElement('option');
-                option.value = medico.correo;
-                option.textContent = `${medico.nombre} ${medico.apellidos}`;
-                medicoList.appendChild(option);
-            });
+            medicoList.innerHTML = '';  // Asegúrate de limpiar el menú desplegable antes de agregar nuevos médicos
+            if (medicos.length === 0) {
+                // Mostrar un mensaje si no hay médicos registrados
+                const noMedicos = document.createElement('option');
+                noMedicos.textContent = 'No hay médicos registrados';
+                noMedicos.disabled = true;
+                medicoList.appendChild(noMedicos);
+            } else {
+                medicos.forEach(medico => {
+                    const option = document.createElement('option');
+                    option.value = medico.correo;
+                    option.textContent = `${medico.nombre} ${medico.apellidos}`;
+                    medicoList.appendChild(option);
+                });
+            }
         }
 
         function asignarSubespecialidades() {
@@ -168,22 +177,22 @@
                     medicoItem.classList.add('subespecialidad-item');
                     medicoItem.innerHTML = `
                         <strong>${medico.nombre} ${medico.apellidos}</strong>: ${subespecialidades.join(', ')}
-                        <button class="delete-btn" onclick="eliminarSubespecialidades('${correo}')">Eliminar</button>
+                        <button class="delete-btn" onclick="eliminarSubespecialidad('${correo}', '${medico.nombre}', '${medico.apellidos}')">Eliminar</button>
                     `;
                     subespecialidadesList.appendChild(medicoItem);
                 }
             });
         }
 
-        function eliminarSubespecialidades(correo) {
+        function eliminarSubespecialidad(correo, nombre, apellidos) {
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            
-            // Eliminar las subespecialidades del médico seleccionado
-            delete subespecialidadesMedicos[correo];
-            localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
 
-            // Actualizar la lista de subespecialidades
-            mostrarSubespecialidades();
+            // Confirmar antes de eliminar las subespecialidades
+            if (confirm(`¿Estás seguro de eliminar las subespecialidades de ${nombre} ${apellidos}?`)) {
+                delete subespecialidadesMedicos[correo];
+                localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+                mostrarSubespecialidades();  // Actualizar la lista
+            }
         }
     </script>
 </body>
