@@ -5,56 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario Interactivo - Selección de Disponibilidad</title>
     <style>
-        /* ... (mantener los estilos existentes) ... */
-        .medico-list {
-            margin-top: 20px;
-        }
-        .medico-item {
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            margin-bottom: 10px;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
         }
-        .delete-btn {
-            background-color: red;
+        .container {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+        }
+        .calendario {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .calendario div {
+            padding: 10px;
+            text-align: center;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .calendario .header {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        .calendario .weekend {
+            background-color: #f0f0f0;
+        }
+        .calendario .selected-red {
+            background-color: #ffcccc;
+        }
+        .calendario .selected-yellow {
+            background-color: #ffffcc;
+        }
+        .btn-save {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
-            padding: 5px 10px;
+            margin-top: 20px;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Calendario Interactivo - Selección de Disponibilidad</h2>
-        
-        <!-- Lista de médicos -->
-        <div class="medico-list" id="medicoList"></div>
-
         <div class="form-group">
             <label for="medico">Seleccionar Médico:</label>
-            <select id="medico" onchange="generarCalendario()"></select>
+            <select id="medico" onchange="cargarCalendario()"></select>
         </div>
         <div class="form-group">
             <label for="mes">Mes:</label>
             <select id="mes" onchange="generarCalendario()">
-                <!-- ... (opciones de mes existentes) ... -->
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3">Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
             </select>
-
             <label for="anio">Año:</label>
             <select id="anio" onchange="generarCalendario()"></select>
         </div>
-
-        <!-- Botón para guardar los cambios -->
+        <div class="calendario" id="calendario"></div>
         <button class="btn-save" onclick="guardarCambios()">Guardar cambios</button>
-
-        <div class="calendario" id="calendario">
-            <!-- Aquí se generará el calendario -->
-        </div>
-
         <nav>
             <a href="index.html">Volver al Inicio</a>
         </nav>
@@ -62,7 +117,6 @@
 
     <script>
         const medicoSelect = document.getElementById('medico');
-        const medicoList = document.getElementById('medicoList');
         const calendarioDiv = document.getElementById('calendario');
         const mesSelect = document.getElementById('mes');
         const anioSelect = document.getElementById('anio');
@@ -71,39 +125,23 @@
         window.onload = function() {
             cargarMedicos();
             cargarAnios();
-            generarCalendario();
+            cargarCalendario();
         };
 
         function cargarMedicos() {
             const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
             medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
-            medicoList.innerHTML = '';
             medicos.forEach(medico => {
                 const option = document.createElement('option');
                 option.value = medico.correo;
                 option.textContent = `${medico.nombre} ${medico.apellidos}`;
                 medicoSelect.appendChild(option);
-
-                const medicoItem = document.createElement('div');
-                medicoItem.classList.add('medico-item');
-                medicoItem.innerHTML = `
-                    <span>${medico.nombre} ${medico.apellidos} - ${medico.correo}</span>
-                    <button class="delete-btn" onclick="eliminarMedico('${medico.correo}')">Eliminar</button>
-                `;
-                medicoList.appendChild(medicoItem);
             });
-        }
-
-        function eliminarMedico(correo) {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicos = medicos.filter(m => m.correo !== correo);
-            localStorage.setItem('medicos', JSON.stringify(medicos));
-            cargarMedicos();
         }
 
         function cargarAnios() {
             const anioActual = new Date().getFullYear();
-            for (let i = anioActual - 10; i <= anioActual + 10; i++) {
+            for (let i = anioActual - 2; i <= anioActual + 2; i++) {
                 const option = document.createElement('option');
                 option.value = i;
                 option.textContent = i;
@@ -112,22 +150,70 @@
             anioSelect.value = anioActual;
         }
 
+        function cargarCalendario() {
+            const correoMedico = medicoSelect.value;
+            if (correoMedico) {
+                calendarioSeleccion = JSON.parse(localStorage.getItem(`calendario_${correoMedico}`)) || {};
+            } else {
+                calendarioSeleccion = {};
+            }
+            generarCalendario();
+        }
+
         function generarCalendario() {
-            // ... (mantener la función existente) ...
+            const mes = parseInt(mesSelect.value);
+            const anio = parseInt(anioSelect.value);
+            const correoMedico = medicoSelect.value;
+
+            if (!correoMedico) {
+                calendarioDiv.innerHTML = '<p>Por favor, seleccione un médico.</p>';
+                return;
+            }
+
+            const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const primerDia = new Date(anio, mes, 1).getDay();
+            const ultimoDia = new Date(anio, mes + 1, 0).getDate();
+
+            let calendarioHTML = diasSemana.map(dia => `<div class="header">${dia}</div>`).join('');
+
+            let diaActual = 1;
+            for (let i = 0; i < 42; i++) {
+                if (i < (primerDia === 0 ? 6 : primerDia - 1) || diaActual > ultimoDia) {
+                    calendarioHTML += '<div></div>';
+                } else {
+                    const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${diaActual.toString().padStart(2, '0')}`;
+                    const clase = calendarioSeleccion[fecha] === 'rojo' ? 'selected-red' : 
+                                  calendarioSeleccion[fecha] === 'amarillo' ? 'selected-yellow' : '';
+                    const esFinDeSemana = i % 7 === 5 || i % 7 === 6 ? 'weekend' : '';
+                    calendarioHTML += `<div class="day ${esFinDeSemana} ${clase}" onclick="seleccionarDia(this, '${fecha}')">${diaActual}</div>`;
+                    diaActual++;
+                }
+            }
+
+            calendarioDiv.innerHTML = calendarioHTML;
+        }
+
+        function seleccionarDia(elemento, fecha) {
+            if (elemento.classList.contains('selected-red')) {
+                elemento.classList.remove('selected-red');
+                elemento.classList.add('selected-yellow');
+                calendarioSeleccion[fecha] = 'amarillo';
+            } else if (elemento.classList.contains('selected-yellow')) {
+                elemento.classList.remove('selected-yellow');
+                delete calendarioSeleccion[fecha];
+            } else {
+                elemento.classList.add('selected-red');
+                calendarioSeleccion[fecha] = 'rojo';
+            }
         }
 
         function guardarCambios() {
             const correoMedico = medicoSelect.value;
-            const mes = mesSelect.value;
-            const anio = anioSelect.value;
-
             if (!correoMedico) {
                 alert("Por favor, selecciona un médico.");
                 return;
             }
-
-            const key = `${correoMedico}-${mes}-${anio}`;
-            localStorage.setItem(key, JSON.stringify(calendarioSeleccion));
+            localStorage.setItem(`calendario_${correoMedico}`, JSON.stringify(calendarioSeleccion));
             alert("Cambios guardados correctamente.");
         }
     </script>
