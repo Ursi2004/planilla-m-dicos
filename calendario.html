@@ -6,23 +6,32 @@
     <title>Calendario Interactivo</title>
     <style>
         /* ... (mantener los estilos existentes) ... */
-        .legend {
-            display: flex;
-            justify-content: center;
+        .calendario {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
             margin-top: 20px;
         }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin: 0 10px;
+        .calendario div {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+            cursor: pointer;
         }
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            margin-right: 5px;
+        .calendario .header {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
         }
-        .red { background-color: #ffcccc; }
-        .yellow { background-color: #ffffcc; }
+        .calendario .weekend {
+            background-color: #f0f0f0;
+        }
+        .calendario .selected-red {
+            background-color: #ffcccc;
+        }
+        .calendario .selected-yellow {
+            background-color: #ffffcc;
+        }
     </style>
 </head>
 <body>
@@ -35,22 +44,22 @@
         <div class="form-group">
             <label for="mes">Mes:</label>
             <select id="mes" onchange="generarCalendario()">
-                <!-- ... (mantener las opciones de mes) ... -->
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3">Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
             </select>
 
             <label for="anio">Año:</label>
             <select id="anio" onchange="generarCalendario()"></select>
-        </div>
-
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color red"></div>
-                <span>No disponible</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color yellow"></div>
-                <span>Preferencia de no trabajar</span>
-            </div>
         </div>
 
         <button class="btn-save" onclick="guardarCambios()">Guardar cambios</button>
@@ -68,7 +77,6 @@
         const mesSelect = document.getElementById('mes');
         const anioSelect = document.getElementById('anio');
         let calendarioSeleccion = {};
-        let seleccionInicio = null;
 
         window.onload = function() {
             cargarMedicos();
@@ -89,7 +97,7 @@
 
         function cargarAnios() {
             const anioActual = new Date().getFullYear();
-            for (let i = anioActual - 10; i <= anioActual + 10; i++) {
+            for (let i = anioActual - 2; i <= anioActual + 2; i++) {
                 const option = document.createElement('option');
                 option.value = i;
                 option.textContent = i;
@@ -133,56 +141,26 @@
                     const clase = calendarioSeleccion[fecha] === 'rojo' ? 'selected-red' : 
                                   calendarioSeleccion[fecha] === 'amarillo' ? 'selected-yellow' : '';
                     const esFinDeSemana = i % 7 === 5 || i % 7 === 6 ? 'weekend' : '';
-                    calendarioHTML += `<div class="day ${esFinDeSemana} ${clase}" data-fecha="${fecha}">${diaActual}</div>`;
+                    calendarioHTML += `<div class="day ${esFinDeSemana} ${clase}" onclick="seleccionarDia(this, '${fecha}')">${diaActual}</div>`;
                     diaActual++;
                 }
             }
 
             calendarioDiv.innerHTML = calendarioHTML;
-
-            calendarioDiv.addEventListener('mousedown', iniciarSeleccion);
-            calendarioDiv.addEventListener('mouseover', continuarSeleccion);
-            calendarioDiv.addEventListener('mouseup', finalizarSeleccion);
         }
 
-        function iniciarSeleccion(e) {
-            if (e.target.classList.contains('day')) {
-                seleccionInicio = e.target.dataset.fecha;
+        function seleccionarDia(elemento, fecha) {
+            if (elemento.classList.contains('selected-red')) {
+                elemento.classList.remove('selected-red');
+                elemento.classList.add('selected-yellow');
+                calendarioSeleccion[fecha] = 'amarillo';
+            } else if (elemento.classList.contains('selected-yellow')) {
+                elemento.classList.remove('selected-yellow');
+                delete calendarioSeleccion[fecha];
+            } else {
+                elemento.classList.add('selected-red');
+                calendarioSeleccion[fecha] = 'rojo';
             }
-        }
-
-        function continuarSeleccion(e) {
-            if (seleccionInicio && e.target.classList.contains('day')) {
-                const fechaActual = e.target.dataset.fecha;
-                aplicarSeleccion(seleccionInicio, fechaActual);
-            }
-        }
-
-        function finalizarSeleccion() {
-            seleccionInicio = null;
-        }
-
-        function aplicarSeleccion(inicio, fin) {
-            const fechaInicio = new Date(inicio);
-            const fechaFin = new Date(fin);
-            const dias = document.querySelectorAll('.day');
-
-            dias.forEach(dia => {
-                const fecha = new Date(dia.dataset.fecha);
-                if (fecha >= fechaInicio && fecha <= fechaFin) {
-                    if (dia.classList.contains('selected-red')) {
-                        dia.classList.remove('selected-red');
-                        dia.classList.add('selected-yellow');
-                        calendarioSeleccion[dia.dataset.fecha] = 'amarillo';
-                    } else if (dia.classList.contains('selected-yellow')) {
-                        dia.classList.remove('selected-yellow');
-                        delete calendarioSeleccion[dia.dataset.fecha];
-                    } else {
-                        dia.classList.add('selected-red');
-                        calendarioSeleccion[dia.dataset.fecha] = 'rojo';
-                    }
-                }
-            });
         }
 
         function guardarCambios() {
@@ -194,6 +172,9 @@
             localStorage.setItem(correoMedico, JSON.stringify(calendarioSeleccion));
             alert("Cambios guardados correctamente.");
         }
+
+        // Inicializar el calendario al cargar la página
+        generarCalendario();
     </script>
 </body>
 </html>
