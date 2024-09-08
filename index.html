@@ -78,25 +78,19 @@
             cursor: pointer;
             padding: 5px 10px;
         }
-        .lang-select {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Registro de Médicos</h1>
-        <div class="lang-select">
-            <select id="language" onchange="changeLanguage()">
-                <option value="es">🇪🇸 Español</option>
-                <option value="en">🇬🇧 English</option>
-                <option value="fr">🇫🇷 Français</option>
-                <option value="de">🇩🇪 Deutsch</option>
-                <option value="pt">🇵🇹 Português</option>
-            </select>
-        </div>
     </header>
 
     <div class="container">
@@ -116,10 +110,19 @@
         <button class="btn" onclick="agregarMedico()">Aceptar médico</button>
 
         <div class="medico-list" id="medicoList"></div>
+
+        <nav>
+            <a href="subespecialidades.html">Ir a Subespecialidades</a>
+        </nav>
     </div>
 
     <script>
         const medicoList = document.getElementById('medicoList');
+
+        // Cargar médicos guardados en localStorage al iniciar la página
+        window.onload = function() {
+            cargarMedicos();
+        };
 
         function agregarMedico() {
             const nombre = document.getElementById('nombre').value;
@@ -127,14 +130,17 @@
             const correo = document.getElementById('correo').value;
 
             if (nombre && apellidos && correo) {
-                const medicoItem = document.createElement('div');
-                medicoItem.classList.add('medico-item');
-                medicoItem.innerHTML = `
-                    <span>${nombre} ${apellidos} - ${correo}</span>
-                    <button class="delete-btn" onclick="eliminarMedico(this)">Eliminar</button>
-                `;
-                medicoList.appendChild(medicoItem);
+                const medico = { nombre, apellidos, correo };
+                
+                // Guardar médico en localStorage
+                let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+                medicos.push(medico);
+                localStorage.setItem('medicos', JSON.stringify(medicos));
 
+                // Mostrar médico en la lista
+                mostrarMedico(medico);
+
+                // Limpiar los campos del formulario
                 document.getElementById('nombre').value = '';
                 document.getElementById('apellidos').value = '';
                 document.getElementById('correo').value = '';
@@ -143,15 +149,31 @@
             }
         }
 
-        function eliminarMedico(button) {
-            const medicoItem = button.parentElement;
-            medicoList.removeChild(medicoItem);
+        function mostrarMedico(medico) {
+            const medicoItem = document.createElement('div');
+            medicoItem.classList.add('medico-item');
+            medicoItem.innerHTML = `
+                <span>${medico.nombre} ${medico.apellidos} - ${medico.correo}</span>
+                <button class="delete-btn" onclick="eliminarMedico('${medico.correo}')">Eliminar</button>
+            `;
+            medicoList.appendChild(medicoItem);
         }
 
-        function changeLanguage() {
-            const language = document.getElementById('language').value;
-            alert('Idioma cambiado a ' + language);
-            // Aquí podrías implementar el cambio de idioma según la selección
+        function cargarMedicos() {
+            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            medicos.forEach(medico => {
+                mostrarMedico(medico);
+            });
+        }
+
+        function eliminarMedico(correo) {
+            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            medicos = medicos.filter(m => m.correo !== correo);
+            localStorage.setItem('medicos', JSON.stringify(medicos));
+
+            // Recargar la lista de médicos
+            medicoList.innerHTML = '';
+            cargarMedicos();
         }
     </script>
 </body>
