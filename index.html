@@ -132,6 +132,11 @@
                 medicos.push(medico);
                 localStorage.setItem('medicos', JSON.stringify(medicos));
 
+                // Asignar "Pediatría General" como subespecialidad predeterminada
+                let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+                subespecialidadesMedicos[correo] = ["Pediatría General"];
+                localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+
                 // Mostrar médico en la lista
                 mostrarMedico(medico);
 
@@ -165,6 +170,11 @@
             let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
             medicos = medicos.filter(m => m.correo !== correo);
             localStorage.setItem('medicos', JSON.stringify(medicos));
+
+            // También eliminamos las subespecialidades asignadas
+            let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+            delete subespecialidadesMedicos[correo];
+            localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
 
             // Recargar la lista de médicos
             medicoList.innerHTML = '';
