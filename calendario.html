@@ -132,7 +132,6 @@
         window.onload = function() {
             cargarMedicos();
             cargarAnios();
-            generarCalendario();
         };
 
         function cargarMedicos() {
@@ -144,6 +143,7 @@
                 option.textContent = `${medico.nombre} ${medico.apellidos}`;
                 medicoSelect.appendChild(option);
             });
+            generarCalendario();  // Generar el calendario inicial
         }
 
         function cargarAnios() {
@@ -162,9 +162,7 @@
             const anio = parseInt(anioSelect.value);
             const correoMedico = medicoSelect.value;
 
-            if (!correoMedico) {
-                return;  // No hay médico seleccionado, no generar el calendario
-            }
+            if (!correoMedico) return;  // No hay médico seleccionado, no generar el calendario
 
             // Limpiar el calendario antes de generarlo
             calendarioDiv.innerHTML = '';
