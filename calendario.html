@@ -177,7 +177,8 @@
             let iniciado = false;
 
             // Cargar preferencias guardadas
-            calendarioSeleccion = JSON.parse(localStorage.getItem(`${correoMedico}-${mes}-${anio}`)) || {};
+            const key = `${correoMedico}-${mes}-${anio}`;
+            calendarioSeleccion = JSON.parse(localStorage.getItem(key)) || {};
 
             for (let i = 0; i < 6 * 7; i++) {
                 const diaDiv = document.createElement('div');
@@ -228,8 +229,9 @@
             const mes = mesSelect.value;
             const anio = anioSelect.value;
 
-            // Guardar en localStorage
-            localStorage.setItem(`${correoMedico}-${mes}-${anio}`, JSON.stringify(calendarioSeleccion));
+            // Guardar en localStorage con una clave única por médico, mes y año
+            const key = `${correoMedico}-${mes}-${anio}`;
+            localStorage.setItem(key, JSON.stringify(calendarioSeleccion));
             alert('Cambios guardados con éxito.');
         }
     </script>
