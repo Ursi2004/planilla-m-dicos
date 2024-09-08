@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Interactivo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group select {
+            width: 100px;
+            padding: 10px;
+        }
+        .calendario {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-gap: 10px;
+            margin-top: 20px;
+        }
+        .calendario div {
+            padding: 15px;
+            text-align: center;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .calendario .header {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        .calendario .weekend {
+            background-color: #d3e0ff;
+        }
+        .calendario .selected-red {
+            background-color: #ffcccc !important;
+        }
+        .calendario .selected-yellow {
+            background-color: #ffffcc !important;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Calendario Interactivo</h2>
+        <div class="form-group">
+            <label for="medico">Seleccionar Médico:</label>
+            <select id="medico"></select>
+        </div>
+        <div class="form-group">
+            <label for="mes">Mes:</label>
+            <select id="mes" onchange="generarCalendario()">
+                <!-- Opciones de meses -->
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3">Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
+            </select>
+
+            <label for="anio">Año:</label>
+            <select id="anio" onchange="generarCalendario()">
+                <!-- Opciones de años -->
+            </select>
+        </div>
+
+        <div class="calendario" id="calendario">
+            <!-- Aquí se generará el calendario -->
+        </div>
+
+        <nav>
+            <a href="index.html">Volver al Inicio</a>
+        </nav>
+    </div>
+
+    <script>
+        const medicoSelect = document.getElementById('medico');
+        const calendarioDiv = document.getElementById('calendario');
+        const mesSelect = document.getElementById('mes');
+        const anioSelect = document.getElementById('anio');
+
+        // Cargar médicos de localStorage al cargar la página
+        window.onload = function() {
+            cargarMedicos();
+            cargarAnios();
+            generarCalendario();
+        };
+
+        function cargarMedicos() {
+            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            medicoSelect.innerHTML = '';  // Limpiar el menú desplegable
+            medicos.forEach(medico => {
+                const option = document.createElement('option');
+                option.value = medico.correo;
+                option.textContent = `${medico.nombre} ${medico.apellidos}`;
+                medicoSelect.appendChild(option);
+            });
+        }
+
+        function cargarAnios() {
+            const anioActual = new Date().getFullYear();
+            for (let i = anioActual - 10; i <= anioActual + 10; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                anioSelect.appendChild(option);
+            }
+            anioSelect.value = anioActual;  // Seleccionar el año actual
+        }
+
+        function generarCalendario() {
+            const mes = parseInt(mesSelect.value);
+            const anio = parseInt(anioSelect.value);
+
+            calendarioDiv.innerHTML = '';  // Limpiar calendario
+            const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            diasSemana.forEach(dia => {
+                const headerDiv = document.createElement('div');
+                headerDiv.textContent = dia;
+                headerDiv.classList.add('header');
+                calendarioDiv.appendChild(headerDiv);
+            });
+
+            const primerDia = new Date(anio, mes, 1).getDay();
+            const ultimoDia = new Date(anio, mes + 1, 0).getDate();
+            let diaActual = 1;
+            let iniciado = false;
+
+            for (let i = 0; i < 6 * 7; i++) {
+                const diaDiv = document.createElement('div');
+                diaDiv.classList.add('day');
+
+                // Rellenar con espacios antes del primer día
+                if (!iniciado && (i % 7 === (primerDia === 0 ? 6 : primerDia - 1))) {
+                    iniciado = true;
+                }
+
+                if (iniciado && diaActual <= ultimoDia) {
+                    diaDiv.textContent = diaActual;
+                    const diaSemana = (i % 7);
+                    if (diaSemana === 5 || diaSemana === 6) {
+                        diaDiv.classList.add('weekend');  // Sábados y domingos
+                    }
+                    diaDiv.onclick = function() {
+                        if (diaDiv.classList.contains('selected-red')) {
+                            diaDiv.classList.remove('selected-red');
+                            diaDiv.classList.add('selected-yellow');
+                        } else if (diaDiv.classList.contains('selected-yellow')) {
+                            diaDiv.classList.remove('selected-yellow');
+                        } else {
+                            diaDiv.classList.add('selected-red');
+                        }
+                    };
+                    diaActual++;
+                }
+
+                calendarioDiv.appendChild(diaDiv);
+            }
+        }
+    </script>
+</body>
+</html>
