@@ -149,7 +149,21 @@
             consultas.push(consulta);
             localStorage.setItem('consultas', JSON.stringify(consultas));
 
-            mostrarConsulta(consulta);
+            cargarConsultas();
+        }
+
+        function cargarConsultas() {
+            let consultas = JSON.parse(localStorage.getItem('consultas')) || [];
+            
+            // Ordenar las consultas alfabéticamente por su nombre
+            consultas.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+            // Limpiar la lista antes de mostrar las consultas ordenadas
+            consultasList.innerHTML = '<h3>Consultas Creadas</h3>';
+            
+            consultas.forEach(consulta => {
+                mostrarConsulta(consulta);
+            });
         }
 
         function mostrarConsulta(consulta) {
@@ -160,13 +174,6 @@
                 <strong>Horario:</strong> ${consulta.inicio} - ${consulta.fin}
             `;
             consultasList.appendChild(consultaItem);
-        }
-
-        function cargarConsultas() {
-            let consultas = JSON.parse(localStorage.getItem('consultas')) || [];
-            consultas.forEach(consulta => {
-                mostrarConsulta(consulta);
-            });
         }
     </script>
 </body>
