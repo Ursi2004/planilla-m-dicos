@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validar Subespecialidades</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .medico-list {
+            margin-top: 20px;
+        }
+        .medico-item {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Validar Subespecialidades</h2>
+        <div class="form-group">
+            <label for="medico">Seleccionar Médico:</label>
+            <select id="medico">
+                <!-- Aquí debes llenar con los médicos que has registrado -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="subespecialidades">Seleccionar Subespecialidades:</label>
+            <select id="subespecialidades" multiple>
+                <option value="Pediatría General" selected>Pediatría General</option>
+                <option value="Endocrinología pediátrica">Endocrinología pediátrica</option>
+                <option value="Neumología pediátrica">Neumología pediátrica</option>
+                <option value="Neurología pediátrica">Neurología pediátrica</option>
+                <option value="Nefrología pediátrica">Nefrología pediátrica</option>
+                <option value="CIP-CIN">CIP-CIN</option>
+                <option value="Gastroenterología pediátrica">Gastroenterología pediátrica</option>
+            </select>
+        </div>
+        <button class="btn" onclick="asignarSubespecialidades()">Asignar Subespecialidades</button>
+
+        <div class="medico-list" id="medicoList"></div>
+    </div>
+
+    <script>
+        const medicoList = [];
+
+        function asignarSubespecialidades() {
+            const medico = document.getElementById('medico').value;
+            const subespecialidades = Array.from(document.getElementById('subespecialidades').selectedOptions).map(option => option.value);
+            
+            const medicoItem = {
+                nombre: medico,
+                subespecialidades: subespecialidades
+            };
+            
+            medicoList.push(medicoItem);
+            mostrarMedicos();
+        }
+
+        function mostrarMedicos() {
+            const medicoListElement = document.getElementById('medicoList');
+            medicoListElement.innerHTML = '';
+            
+            medicoList.forEach(medico => {
+                const medicoItem = document.createElement('div');
+                medicoItem.classList.add('medico-item');
+                medicoItem.innerHTML = `
+                    <strong>Médico:</strong> ${medico.nombre} <br>
+                    <strong>Subespecialidades:</strong> ${medico.subespecialidades.join(', ')}
+                `;
+                medicoListElement.appendChild(medicoItem);
+            });
+        }
+
+        // Aquí puedes cargar los médicos que tienes almacenados desde la primera página
+        // Puedes utilizar localStorage o cargarlo de una base de datos más adelante
+    </script>
+</body>
+</html>
