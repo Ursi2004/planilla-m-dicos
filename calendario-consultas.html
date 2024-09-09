@@ -82,6 +82,15 @@
             padding: 10px;
             border: 1px solid #ddd;
         }
+        .papelera {
+            width: 100%;
+            height: 50px;
+            background-color: #ff6b6b;
+            color: white;
+            text-align: center;
+            line-height: 50px;
+            margin-top: 20px;
+        }
         nav {
             margin-top: 20px;
         }
@@ -135,6 +144,9 @@
             <div class="calendar-week" id="calendarWeek"></div>
             <div class="consultas-disponibles" id="consultasDisponibles">
                 <h3>Consultas Disponibles</h3>
+            </div>
+            <div class="papelera" ondrop="eliminarConsulta(event)" ondragover="allowDrop(event)">
+                Arrastre aquí para eliminar consulta
             </div>
         </div>
         <button class="btn" onclick="guardarAsignaciones()">Guardar Asignaciones</button>
@@ -266,6 +278,15 @@
                 modal.style.display = "none";
             } else {
                 alert("Por favor, selecciona una subespecialidad.");
+            }
+        }
+
+        function eliminarConsulta(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text/plain");
+            const consultaElement = document.getElementById(data);
+            if (consultaElement) {
+                consultaElement.remove();
             }
         }
 
