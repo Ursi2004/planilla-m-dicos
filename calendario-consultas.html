@@ -27,19 +27,21 @@
         }
         .form-group {
             margin-bottom: 15px;
+            display: flex;
+            align-items: center;
         }
         .form-group label {
             display: block;
             margin-bottom: 5px;
+            margin-right: 10px;
         }
         .form-group input,
         .form-group select {
-            width: 100%;
+            flex: 1;
             padding: 10px;
             box-sizing: border-box;
         }
         .btn {
-            width: 100%;
             padding: 10px;
             background-color: #4CAF50;
             color: white;
@@ -139,6 +141,7 @@
         <div class="form-group">
             <label for="semana">Seleccionar Semana:</label>
             <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
+            <button class="btn" onclick="copiarSemanaPreviaAsignaciones()">Copiar Semana Previa</button>
         </div>
         <div id="calendarioSemanal" style="display: none;">
             <div class="calendar-week" id="calendarWeek"></div>
@@ -165,8 +168,7 @@
             <button onclick="confirmarAsignacion()">Confirmar</button>
         </div>
     </div>
-
-    <script>
+        <script>
         const semanaInput = document.getElementById('semana');
         const calendarWeek = document.getElementById('calendarWeek');
         const consultasDisponibles = document.getElementById('consultasDisponibles');
@@ -369,6 +371,18 @@
                     dayContent.appendChild(consultaElement);
                 });
             });
+        }
+
+        function copiarSemanaPreviaAsignaciones() {
+            const semanaSeleccionada = semanaInput.value;
+            const fecha = new Date(semanaSeleccionada);
+            fecha.setDate(fecha.getDate() - 7); // Retroceder una semana
+            const semanaPrev = `${fecha.getFullYear()}-W${getWeekNumber(fecha).toString().padStart(2, '0')}`;
+            const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrev}`)) || {};
+
+            // Guardar las asignaciones previas en la semana actual
+            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignacionesPrevias));
+            alert("Distribución de la semana previa copiada correctamente.");
         }
 
         window.onload = function() {
