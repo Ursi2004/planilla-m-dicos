@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Médicos y Calendario Interactivo</title>
+    <title>Calendario Interactivo - Selección de Disponibilidad</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -102,11 +102,25 @@
             text-decoration: none;
             color: #4CAF50;
         }
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Registro de Médicos y Calendario Interactivo</h2>
+        <h2>Calendario Interactivo - Selección de Disponibilidad</h2>
         
         <!-- Formulario de registro de médicos -->
         <div class="form-group">
@@ -155,6 +169,18 @@
         <!-- Calendario -->
         <div class="calendario" id="calendario"></div>
 
+        <!-- Leyenda -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffcccc;"></div>
+                <span>No disponible</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffffcc;"></div>
+                <span>Preferencia de no trabajar</span>
+            </div>
+        </div>
+
         <!-- Botón para guardar los cambios -->
         <button class="btn" onclick="guardarCambios()">Guardar cambios</button>
 
@@ -163,6 +189,7 @@
             <a href="subespecialidades.html">Subespecialidades</a>
             <a href="consultas.html">Crear Consultas</a>
             <a href="calendario-consultas.html">Calendario de Consultas</a>
+            <a href="festivos.html">Calendario de Festivos</a>
         </nav>
     </div>
 
@@ -181,33 +208,31 @@
         };
 
         function agregarMedico() {
-    const nombre = document.getElementById('nombre').value;
-    const apellidos = document.getElementById('apellidos').value;
-    const correo = document.getElementById('correo').value;
+            const nombre = document.getElementById('nombre').value;
+            const apellidos = document.getElementById('apellidos').value;
+            const correo = document.getElementById('correo').value;
 
-    if (nombre && apellidos && correo) {
-        const medico = { nombre, apellidos, correo };
-        
-        // Guardar médico en localStorage
-        let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-        medicos.push(medico);
-        localStorage.setItem('medicos', JSON.stringify(medicos));
+            if (nombre && apellidos && correo) {
+                const medico = { nombre, apellidos, correo };
+                
+                let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+                medicos.push(medico);
+                localStorage.setItem('medicos', JSON.stringify(medicos));
 
-        // Asignar "Pediatría General" como subespecialidad predeterminada
-        let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-        subespecialidadesMedicos[correo] = ["Pediatría General"];
-        localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+                let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+                subespecialidadesMedicos[correo] = ["Pediatría General"];
+                localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
 
-        mostrarMedico(medico);
-        actualizarSelectMedicos();
+                mostrarMedico(medico);
+                actualizarSelectMedicos();
 
-        document.getElementById('nombre').value = '';
-        document.getElementById('apellidos').value = '';
-        document.getElementById('correo').value = '';
-    } else {
-        alert('Por favor, rellena todos los campos.');
-    }
-}
+                document.getElementById('nombre').value = '';
+                document.getElementById('apellidos').value = '';
+                document.getElementById('correo').value = '';
+            } else {
+                alert('Por favor, rellena todos los campos.');
+            }
+        }
 
         function mostrarMedico(medico) {
             const medicoItem = document.createElement('div');
