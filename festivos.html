@@ -3,250 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Festivos 2024</title>
+    <title>Selector de Días Festivos</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
         }
         .container {
-            margin-top: 20px;
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
             background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        h2 {
+        h1 {
             text-align: center;
+        }
+        .selectors {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 5px;
         }
         .calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 5px;
-            margin-top: 20px;
         }
         .day {
             border: 1px solid #ddd;
-            padding: 5px;
-            text-align: center;
-            min-height: 80px;
-        }
-        .day-header {
-            font-weight: bold;
-            background-color: #4CAF50;
-            color: white;
-        }
-        .festivo-nacional {
-            background-color: #ffcccc;
-        }
-        .festivo-madrid {
-            background-color: #ffffcc;
-        }
-        .weekend {
-            background-color: #ffcccc;
-        }
-        .festivo-manual {
-            background-color: #ccffcc;
-        }
-        .motivo {
-            font-size: 10px;
-            color: #666;
-        }
-        nav {
-            margin-top: 20px;
-        }
-        nav a {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #4CAF50;
-        }
-        .mini-calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-            margin-top: 20px;
-            max-width: 300px;
-        }
-        .mini-day {
-            border: 1px solid #ddd;
-            padding: 5px;
+            padding: 10px;
             text-align: center;
             cursor: pointer;
         }
-        .mini-day.selected {
-            background-color: #ccffcc;
+        .day:hover {
+            background-color: #f0f0f0;
         }
-        .btn {
-            margin-top: 10px;
-            padding: 5px 10px;
+        .selected {
+            background-color: #ffcccc;
+        }
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
             background-color: #4CAF50;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Calendario de Festivos 2024 - Nacional y Comunidad de Madrid</h2>
-        <div id="calendario" class="calendar"></div>
-        <h3>Añadir Festivos Manualmente</h3>
-        <div id="miniCalendario" class="mini-calendar"></div>
-        <button id="confirmarFestivo" class="btn">Confirmar Festivo</button>
-        <nav>
-            <a href="index.html">Volver al Inicio</a>
-        </nav>
+        <h1>Selector de Días Festivos</h1>
+        <div class="selectors">
+            <select id="month">
+                <option value="0">Enero</option>
+                <option value="1">Febrero</option>
+                <option value="2">Marzo</option>
+                <option value="3">Abril</option>
+                <option value="4">Mayo</option>
+                <option value="5">Junio</option>
+                <option value="6">Julio</option>
+                <option value="7">Agosto</option>
+                <option value="8">Septiembre</option>
+                <option value="9">Octubre</option>
+                <option value="10">Noviembre</option>
+                <option value="11">Diciembre</option>
+            </select>
+            <select id="year">
+                <!-- Se llenará con JavaScript -->
+            </select>
+        </div>
+        <div id="calendar" class="calendar">
+            <!-- Se llenará con JavaScript -->
+        </div>
+        <div class="controls">
+            <button onclick="guardarFestivos()">Guardar Festivos</button>
+        </div>
     </div>
-        <script>
-        const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        const festivosNacionales = {
-            "2024-01-01": "Año Nuevo",
-            "2024-01-06": "Epifanía del Señor",
-            "2024-03-29": "Viernes Santo",
-            "2024-05-01": "Fiesta del Trabajo",
-            "2024-08-15": "Asunción de la Virgen",
-            "2024-10-12": "Fiesta Nacional de España",
-            "2024-11-01": "Todos los Santos",
-            "2024-12-06": "Día de la Constitución Española",
-            "2024-12-25": "Navidad"
-        };
+    <script>
+        const monthSelect = document.getElementById('month');
+        const yearSelect = document.getElementById('year');
+        const calendar = document.getElementById('calendar');
+        let selectedDays = new Set();
 
-        const festivosMadrid = {
-            "2024-01-01": "Año Nuevo",
-            "2024-01-06": "Epifanía del Señor",
-            "2024-03-28": "Jueves Santo",
-            "2024-03-29": "Viernes Santo",
-            "2024-05-01": "Fiesta del Trabajo",
-            "2024-05-02": "Fiesta de la Comunidad de Madrid",
-            "2024-05-15": "San Isidro",
-            "2024-08-15": "Asunción de la Virgen",
-            "2024-10-12": "Fiesta Nacional de España",
-            "2024-11-01": "Todos los Santos",
-            "2024-12-06": "Día de la Constitución Española",
-            "2024-12-25": "Navidad"
-        };
-
-        let festivosManuales = {};
-
-        function generarCalendario() {
-            const calendarioDiv = document.getElementById('calendario');
-            const anio = 2024;
-
-            for (let mes = 0; mes < 12; mes++) {
-                calendarioDiv.innerHTML += `<div class="month-header" style="grid-column: 1 / -1; text-align: center; font-weight: bold; margin: 10px 0;">${meses[mes]} ${anio}</div>`;
-
-                diasSemana.forEach(dia => {
-                    calendarioDiv.innerHTML += `<div class="day-header">${dia}</div>`;
-                });
-
-                const primerDia = new Date(anio, mes, 1).getDay();
-                const diasEnMes = new Date(anio, mes + 1, 0).getDate();
-
-                for (let i = 0; i < (primerDia + 6) % 7; i++) {
-                    calendarioDiv.innerHTML += '<div class="day"></div>';
-                }
-
-                for (let dia = 1; dia <= diasEnMes; dia++) {
-                    const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                    const diaSemana = new Date(anio, mes, dia).getDay();
-                    let clase = '';
-                    let motivo = '';
-
-                    if (festivosNacionales[fecha]) {
-                        clase = 'festivo-nacional';
-                        motivo = festivosNacionales[fecha];
-                    } else if (festivosMadrid[fecha]) {
-                        clase = 'festivo-madrid';
-                        motivo = festivosMadrid[fecha];
-                    } else if (festivosManuales[fecha]) {
-                        clase = 'festivo-manual';
-                        motivo = 'Añadido';
-                    }
-
-                    if (diaSemana === 0 || diaSemana === 6) {
-                        clase += ' weekend';
-                    }
-
-                    let contenido = `
-                        <div>${dia}</div>
-                        ${motivo ? `<div class="motivo">${motivo}</div>` : ''}
-                    `;
-
-                    if (festivosManuales[fecha]) {
-                        contenido += `<button onclick="eliminarFestivo('${fecha}')">Eliminar festivo</button>`;
-                    }
-
-                    calendarioDiv.innerHTML += `
-                        <div class="day ${clase}" data-fecha="${fecha}">
-                            ${contenido}
-                        </div>
-                    `;
-                }
+        function initializeYearSelect() {
+            const currentYear = new Date().getFullYear();
+            for (let year = currentYear; year <= currentYear + 5; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
             }
         }
 
-        function generarMiniCalendario() {
-            const miniCalendarioDiv = document.getElementById('miniCalendario');
-            const anio = 2024;
-            const mesActual = new Date().getMonth();
+        function generateCalendar() {
+            const month = parseInt(monthSelect.value);
+            const year = parseInt(yearSelect.value);
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
 
-            miniCalendarioDiv.innerHTML = '';
+            calendar.innerHTML = '';
 
-            diasSemana.forEach(dia => {
-                miniCalendarioDiv.innerHTML += `<div class="mini-day-header">${dia}</div>`;
+            // Añadir encabezados de días
+            ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.textContent = day;
+                dayHeader.style.fontWeight = 'bold';
+                calendar.appendChild(dayHeader);
             });
 
-            const primerDia = new Date(anio, mesActual, 1).getDay();
-            const diasEnMes = new Date(anio, mesActual + 1, 0).getDate();
-
-            for (let i = 0; i < (primerDia + 6) % 7; i++) {
-                miniCalendarioDiv.innerHTML += '<div class="mini-day"></div>';
+            // Añadir espacios en blanco para el primer día
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                calendar.appendChild(document.createElement('div'));
             }
 
-            for (let dia = 1; dia <= diasEnMes; dia++) {
-                const fecha = `${anio}-${(mesActual + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                miniCalendarioDiv.innerHTML += `
-                    <div class="mini-day" onclick="seleccionarFecha('${fecha}')">${dia}</div>
-                `;
-            }
-        }
-
-        function seleccionarFecha(fecha) {
-            const dias = document.querySelectorAll('.mini-day');
-            dias.forEach(dia => dia.classList.remove('selected'));
-            event.target.classList.add('selected');
-        }
-
-        function confirmarFestivo() {
-            const diaSeleccionado = document.querySelector('.mini-day.selected');
-            if (diaSeleccionado) {
-                const fecha = diaSeleccionado.textContent;
-                const mesActual = new Date().getMonth();
-                const fechaCompleta = `2024-${(mesActual + 1).toString().padStart(2, '0')}-${fecha.padStart(2, '0')}`;
-                festivosManuales[fechaCompleta] = true;
-                generarCalendario();
-                generarMiniCalendario();
+            // Añadir días del mes
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day';
+                dayElement.textContent = day;
+                dayElement.onclick = () => toggleDay(year, month, day, dayElement);
+                calendar.appendChild(dayElement);
             }
         }
 
-        function eliminarFestivo(fecha) {
-            delete festivosManuales[fecha];
-            generarCalendario();
+        function toggleDay(year, month, day, element) {
+            const dateString = `${year}-${month+1}-${day}`;
+            if (selectedDays.has(dateString)) {
+                selectedDays.delete(dateString);
+                element.classList.remove('selected');
+            } else {
+                selectedDays.add(dateString);
+                element.classList.add('selected');
+            }
         }
 
-        window.onload = function() {
-            generarCalendario();
-            generarMiniCalendario();
-            document.getElementById('confirmarFestivo').addEventListener('click', confirmarFestivo);
-        };
+        function guardarFestivos() {
+            localStorage.setItem('festivosSeleccionados', JSON.stringify([...selectedDays]));
+            alert('Días festivos guardados correctamente');
+        }
+
+        function cargarFestivos() {
+            const festivos = JSON.parse(localStorage.getItem('festivosSeleccionados')) || [];
+            selectedDays = new Set(festivos);
+            updateCalendarSelection();
+        }
+
+        function updateCalendarSelection() {
+            const month = parseInt(monthSelect.value);
+            const year = parseInt(yearSelect.value);
+            document.querySelectorAll('.day').forEach(dayElement => {
+                const day = parseInt(dayElement.textContent);
+                const dateString = `${year}-${month+1}-${day}`;
+                if (selectedDays.has(dateString)) {
+                    dayElement.classList.add('selected');
+                } else {
+                    dayElement.classList.remove('selected');
+                }
+            });
+        }
+
+        monthSelect.onchange = generateCalendar;
+        yearSelect.onchange = generateCalendar;
+
+        initializeYearSelect();
+        generateCalendar();
+        cargarFestivos();
     </script>
 </body>
 </html>
