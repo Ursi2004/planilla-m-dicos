@@ -131,7 +131,10 @@
             cargarMedicos();
             mostrarTablasSubespecialidades();
         };
-
+window.onload = function() {
+    cargarMedicos();
+    cargarSubespecialidades();
+};
         function cargarMedicos() {
     const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
     const subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
