@@ -77,16 +77,14 @@
             text-align: center;
             margin-bottom: 5px;
         }
-        .turno-asignado {
-            background-color: #e6f3ff;
-            padding: 2px 5px;
-            margin: 2px 0;
-            font-size: 0.9em;
+        nav {
+            margin-top: 20px;
+            text-align: center;
         }
-        .eliminar-turno {
-            color: red;
-            cursor: pointer;
-            margin-left: 5px;
+        nav a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -114,6 +112,10 @@
         <div id="turnosList"></div>
         
         <div id="calendario"></div>
+
+        <nav>
+            <a href="index.html">Volver al Inicio</a>
+        </nav>
     </div>
 
     <script>
@@ -155,7 +157,7 @@
                 const turnoElement = document.createElement('div');
                 turnoElement.className = 'turno';
                 turnoElement.draggable = true;
-                turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin}) <span class="eliminar-turno" onclick="eliminarTurno(${index})">❌</span>`;
                 turnoElement.addEventListener('dragstart', (e) => drag(e, index));
                 turnosList.appendChild(turnoElement);
             });
@@ -203,9 +205,9 @@
 
         function generarCalendario() {
             const calendario = document.getElementById('calendario');
-            calendario.innerHTML = '';
             const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
             
+            // Agregar encabezados de días
             diasSemana.forEach(dia => {
                 const diaHeader = document.createElement('div');
                 diaHeader.className = 'dia-header';
@@ -213,34 +215,18 @@
                 calendario.appendChild(diaHeader);
             });
             
+            // Agregar días del mes (ejemplo para 31 días)
             for (let i = 1; i <= 31; i++) {
                 const dia = document.createElement('div');
                 dia.className = 'dia';
                 dia.innerHTML = `<div class="dia-header">${i}</div>`;
-                dia.ondrop = (e) => drop(e, i);
+                dia.ondrop = drop;
                 dia.ondragover = allowDrop;
                 calendario.appendChild(dia);
             }
         }
 
-        function actualizarCalendario() {
-            const dias = document.querySelectorAll('.dia');
-            dias.forEach((dia, index) => {
-                const diaNum = index + 1;
-                const turnosDia = turnosAsignados[diaNum] || [];
-                let turnosHTML = '';
-                turnosDia.forEach((turno, turnoIndex) => {
-                    turnosHTML += `
-                        <div class="turno-asignado">
-                            ${turno.nombre} (${turno.inicio} - ${turno.fin})
-                            <span class="eliminar-turno" onclick="eliminarTurno(${diaNum}, ${turnoIndex})">❌</span>
-                        </div>
-                    `;
-                });
-                dia.innerHTML = `<div class="dia-header">${diaNum}</div>${turnosHTML}`;
-            });
-        }
-
+        // Inicializar
         window.onload = function() {
             generarOpcionesHoras();
             generarCalendario();
