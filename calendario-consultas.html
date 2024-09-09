@@ -90,6 +90,38 @@
             text-decoration: none;
             color: #4CAF50;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -111,11 +143,24 @@
         </nav>
     </div>
 
+    <div id="subespecialidadModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Seleccionar Subespecialidad</h3>
+            <select id="subespecialidadSelect"></select>
+            <button onclick="asignarSubespecialidad()">Asignar</button>
+        </div>
+    </div>
+
     <script>
         const semanaInput = document.getElementById('semana');
         const calendarWeek = document.getElementById('calendarWeek');
         const consultasDisponibles = document.getElementById('consultasDisponibles');
         const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        let consultaActual;
+        const modal = document.getElementById('subespecialidadModal');
+        const span = document.getElementsByClassName("close")[0];
+        const subespecialidadSelect = document.getElementById('subespecialidadSelect');
 
         function mostrarCalendarioSemanal() {
             const semanaSeleccionada = semanaInput.value;
@@ -183,9 +228,42 @@
             const data = ev.dataTransfer.getData("text/plain");
             const consultaElement = document.getElementById(data);
             if (consultaElement) {
-                const newConsulta = consultaElement.cloneNode(true);
+                consultaActual = JSON.parse(consultaElement.getAttribute('data-consulta'));
+                mostrarModalSubespecialidad();
+            }
+        }
+
+        function mostrarModalSubespecialidad() {
+            cargarSubespecialidades();
+            modal.style.display = "block";
+        }
+
+        function cargarSubespecialidades() {
+            const subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
+            subespecialidadSelect.innerHTML = '';
+            subespecialidades.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub;
+                option.textContent = sub;
+                subespecialidadSelect.appendChild(option);
+            });
+        }
+
+        function asignarSubespecialidad() {
+            const subespecialidadSeleccionada = subespecialidadSelect.value;
+            if (subespecialidadSeleccionada) {
+                consultaActual.subespecialidad = subespecialidadSeleccionada;
+                const newConsulta = document.createElement('div');
+                newConsulta.className = 'consulta';
+                newConsulta.draggable = true;
+                newConsulta.id = `consulta-${consultaActual.id}`;
+                newConsulta.textContent = `${consultaActual.nombre} (${consultaActual.inicio} - ${consultaActual.fin}) - ${subespecialidadSeleccionada}`;
                 newConsulta.addEventListener('dragstart', drag);
-                ev.target.closest('.day-content').appendChild(newConsulta);
+                newConsulta.setAttribute('data-consulta', JSON.stringify(consultaActual));
+                event.target.closest('.day-content').appendChild(newConsulta);
+                modal.style.display = "none";
+            } else {
+                alert("Por favor, selecciona una subespecialidad.");
             }
         }
 
@@ -221,6 +299,16 @@
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
             var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
             return weekNo;
+        }
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
         }
     </script>
 </body>
