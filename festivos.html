@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Festivos por Comunidad</title>
+    <title>Calendario de Festivos 2024</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,18 +25,6 @@
         h2 {
             text-align: center;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-        }
         .calendar {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -51,10 +39,14 @@
         }
         .day-header {
             font-weight: bold;
-            margin-bottom: 5px;
+            background-color: #4CAF50;
+            color: white;
         }
-        .festivo {
+        .festivo-nacional {
             background-color: #ffcccc;
+        }
+        .festivo-madrid {
+            background-color: #ffffcc;
         }
         .motivo {
             font-size: 10px;
@@ -72,30 +64,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>Calendario de Festivos por Comunidad</h2>
-        <div class="form-group">
-            <label for="region">Seleccionar Comunidad Autónoma:</label>
-            <select id="region" onchange="mostrarCalendario()">
-                <option value="">Seleccione una comunidad</option>
-                <option value="01">Andalucía</option>
-                <option value="02">Aragón</option>
-                <option value="03">Asturias</option>
-                <option value="04">Baleares</option>
-                <option value="05">Canarias</option>
-                <option value="06">Cantabria</option>
-                <option value="07">Castilla-La Mancha</option>
-                <option value="08">Castilla y León</option>
-                <option value="09">Cataluña</option>
-                <option value="10">Comunidad Valenciana</option>
-                <option value="11">Extremadura</option>
-                <option value="12">Galicia</option>
-                <option value="13">La Rioja</option>
-                <option value="14">Madrid</option>
-                <option value="15">Murcia</option>
-                <option value="16">Navarra</option>
-                <option value="17">País Vasco</option>
-            </select>
-        </div>
+        <h2>Calendario de Festivos 2024 - Nacional y Comunidad de Madrid</h2>
         <div id="calendario" class="calendar"></div>
         <nav>
             <a href="index.html">Volver al Inicio</a>
@@ -105,65 +74,76 @@
     <script>
         const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
         const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        let festivos = [];
 
-        async function cargarFestivos() {
-            try {
-                const response = await fetch('2024.json');
-                festivos = await response.json();
-            } catch (error) {
-                console.error('Error al cargar los festivos:', error);
-            }
-        }
+        const festivosNacionales = {
+            "2024-01-01": "Año Nuevo",
+            "2024-01-06": "Epifanía del Señor",
+            "2024-03-29": "Viernes Santo",
+            "2024-05-01": "Fiesta del Trabajo",
+            "2024-08-15": "Asunción de la Virgen",
+            "2024-10-12": "Fiesta Nacional de España",
+            "2024-11-01": "Todos los Santos",
+            "2024-12-06": "Día de la Constitución Española",
+            "2024-12-25": "Navidad"
+        };
 
-        function mostrarCalendario() {
-            const region = document.getElementById('region').value;
+        const festivosMadrid = {
+            "2024-01-01": "Año Nuevo",
+            "2024-01-06": "Epifanía del Señor",
+            "2024-03-28": "Jueves Santo",
+            "2024-03-29": "Viernes Santo",
+            "2024-05-01": "Fiesta del Trabajo",
+            "2024-05-02": "Fiesta de la Comunidad de Madrid",
+            "2024-05-15": "San Isidro",
+            "2024-08-15": "Asunción de la Virgen",
+            "2024-10-12": "Fiesta Nacional de España",
+            "2024-11-01": "Todos los Santos",
+            "2024-12-06": "Día de la Constitución Española",
+            "2024-12-25": "Navidad"
+        };
+
+        function generarCalendario() {
             const calendarioDiv = document.getElementById('calendario');
-            calendarioDiv.innerHTML = '';
-
-            if (!region) return;
-
-            const festivosRegion = festivos.filter(f => f.region === region || !f.region);
-            const anioActual = 2024;
+            const anio = 2024;
 
             for (let mes = 0; mes < 12; mes++) {
-                const nombreMes = meses[mes];
-                calendarioDiv.innerHTML += `<div class="month-header" style="grid-column: 1 / -1; text-align: center; font-weight: bold; margin: 10px 0;">${nombreMes} ${anioActual}</div>`;
+                calendarioDiv.innerHTML += `<div class="month-header" style="grid-column: 1 / -1; text-align: center; font-weight: bold; margin: 10px 0;">${meses[mes]} ${anio}</div>`;
 
-                const primerDia = new Date(anioActual, mes, 1).getDay();
-                const diasEnMes = new Date(anioActual, mes + 1, 0).getDate();
-
-                // Añadir días de la semana
                 diasSemana.forEach(dia => {
                     calendarioDiv.innerHTML += `<div class="day-header">${dia}</div>`;
                 });
 
-                // Añadir espacios en blanco para el primer día
+                const primerDia = new Date(anio, mes, 1).getDay();
+                const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+
                 for (let i = 0; i < (primerDia + 6) % 7; i++) {
                     calendarioDiv.innerHTML += '<div class="day"></div>';
                 }
 
-                // Añadir días del mes
                 for (let dia = 1; dia <= diasEnMes; dia++) {
-                    const fecha = `${anioActual}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                    const festivo = festivosRegion.find(f => f.date === fecha);
-                    const claseFestivo = festivo ? 'festivo' : '';
-                    const motivoFestivo = festivo ? `<div class="motivo">${festivo.name}</div>` : '';
+                    const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                    let clase = '';
+                    let motivo = '';
+
+                    if (festivosNacionales[fecha]) {
+                        clase = 'festivo-nacional';
+                        motivo = festivosNacionales[fecha];
+                    } else if (festivosMadrid[fecha]) {
+                        clase = 'festivo-madrid';
+                        motivo = festivosMadrid[fecha];
+                    }
 
                     calendarioDiv.innerHTML += `
-                        <div class="day ${claseFestivo}">
+                        <div class="day ${clase}">
                             <div>${dia}</div>
-                            ${motivoFestivo}
+                            ${motivo ? `<div class="motivo">${motivo}</div>` : ''}
                         </div>
                     `;
                 }
             }
         }
 
-        window.onload = async function() {
-            await cargarFestivos();
-            mostrarCalendario();
-        };
+        window.onload = generarCalendario;
     </script>
 </body>
 </html>
