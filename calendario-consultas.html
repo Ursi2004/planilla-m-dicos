@@ -103,9 +103,9 @@
             <div class="calendar-week" id="calendarWeek"></div>
             <div class="consultas-disponibles" id="consultasDisponibles">
                 <h3>Consultas Disponibles</h3>
-                <!-- Las consultas se cargarán aquí -->
             </div>
         </div>
+        <button class="btn" onclick="guardarAsignaciones()">Guardar Asignaciones</button>
         <nav>
             <a href="index.html">Volver al Inicio</a>
         </nav>
@@ -165,6 +165,7 @@
                 consultaElement.id = `consulta-${consulta.id}`;
                 consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin})`;
                 consultaElement.addEventListener('dragstart', drag);
+                consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
                 consultasDisponibles.appendChild(consultaElement);
             });
         }
@@ -174,18 +175,52 @@
         }
 
         function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.id);
+            ev.dataTransfer.setData("text/plain", ev.target.id);
         }
 
         function drop(ev) {
             ev.preventDefault();
-            const data = ev.dataTransfer.getData("text");
+            const data = ev.dataTransfer.getData("text/plain");
             const consultaElement = document.getElementById(data);
             if (consultaElement) {
                 const newConsulta = consultaElement.cloneNode(true);
                 newConsulta.addEventListener('dragstart', drag);
                 ev.target.closest('.day-content').appendChild(newConsulta);
             }
+        }
+
+        function guardarAsignaciones() {
+            const semanaSeleccionada = semanaInput.value;
+            if (!semanaSeleccionada) {
+                alert("Por favor, selecciona una semana antes de guardar.");
+                return;
+            }
+
+            const asignaciones = {};
+            document.querySelectorAll('.day').forEach((day, index) => {
+                const consultas = Array.from(day.querySelectorAll('.consulta')).map(consulta => {
+                    return JSON.parse(consulta.getAttribute('data-consulta'));
+                });
+                asignaciones[diasSemana[index]] = consultas;
+            });
+
+            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignaciones));
+            alert("Asignaciones guardadas correctamente.");
+        }
+
+        window.onload = function() {
+            const currentDate = new Date();
+            const currentWeek = getWeekNumber(currentDate);
+            semanaInput.value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
+            mostrarCalendarioSemanal();
+        };
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+            return weekNo;
         }
     </script>
 </body>
