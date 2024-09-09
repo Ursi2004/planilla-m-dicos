@@ -321,8 +321,7 @@
             diaSeleccionado.appendChild(newConsulta);
             modal.style.display = "none";
         }
-
-        function eliminarConsulta(ev) {
+                    function eliminarConsulta(ev) {
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text/plain");
             const consultaElement = document.getElementById(data);
@@ -362,7 +361,8 @@
                 
                 consultasDelDia.forEach(consulta => {
                     const consultaElement = document.createElement('div');
-                    consultaElement.className = 'consulta';
+                    consultaElement.className =
+                                            consultaElement.className = 'consulta';
                     consultaElement.draggable = true;
                     consultaElement.id = `consulta-${consulta.id}`;
                     consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
@@ -375,14 +375,22 @@
 
         function copiarSemanaPreviaAsignaciones() {
             const semanaSeleccionada = semanaInput.value;
-            const fecha = new Date(semanaSeleccionada);
-            fecha.setDate(fecha.getDate() - 7); // Retroceder una semana
-            const semanaPrev = `${fecha.getFullYear()}-W${getWeekNumber(fecha).toString().padStart(2, '0')}`;
-            const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrev}`)) || {};
+            if (!semanaSeleccionada) {
+                alert("Por favor, selecciona una semana antes de copiar.");
+                return;
+            }
 
-            // Guardar las asignaciones previas en la semana actual
+            const [year, week] = semanaSeleccionada.split('-W');
+            const semanaPreviaNum = parseInt(week) - 1;
+            const semanaPreviaYear = semanaPreviaNum > 0 ? year : parseInt(year) - 1;
+            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52; // Asumiendo que el año anterior tiene 52 semanas
+            const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
+
+            const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrevia}`)) || {};
             localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignacionesPrevias));
-            alert("Distribución de la semana previa copiada correctamente.");
+
+            cargarAsignacionesGuardadas(semanaSeleccionada);
+            alert("Asignaciones de la semana previa copiadas correctamente.");
         }
 
         window.onload = function() {
