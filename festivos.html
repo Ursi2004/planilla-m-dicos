@@ -3,83 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Festivos de Madrid</title>
+    <title>Calendario de Festivos por Comunidad</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            margin-top: 20px;
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-top: 20px;
-        }
-        .day {
-            border: 1px solid #ddd;
-            padding: 5px;
-            text-align: center;
-            min-height: 80px;
-        }
-        .day-header {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .festivo {
-            background-color: #ffcccc;
-        }
-        .motivo {
-            font-size: 10px;
-            color: #666;
-        }
-        nav {
-            margin-top: 20px;
-        }
-        nav a {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #4CAF50;
-        }
+        /* ... (mantener los estilos existentes) ... */
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Calendario de Festivos de Madrid</h2>
+        <h2>Calendario de Festivos por Comunidad</h2>
         <div class="form-group">
             <label for="anio">Seleccionar Año:</label>
-            <select id="anio" onchange="cargarFestivos()">
+            <select id="anio">
                 <option value="2024">2024</option>
                 <option value="2025">2025</option>
             </select>
         </div>
+        <div class="form-group">
+            <label for="comunidad">Seleccionar Comunidad Autónoma:</label>
+            <select id="comunidad">
+                <option value="">Seleccione una comunidad</option>
+                <option value="ES-AN">Andalucía</option>
+                <option value="ES-AR">Aragón</option>
+                <option value="ES-AS">Asturias</option>
+                <option value="ES-IB">Baleares</option>
+                <option value="ES-CN">Canarias</option>
+                <option value="ES-CB">Cantabria</option>
+                <option value="ES-CM">Castilla-La Mancha</option>
+                <option value="ES-CL">Castilla y León</option>
+                <option value="ES-CT">Cataluña</option>
+                <option value="ES-VC">Comunidad Valenciana</option>
+                <option value="ES-EX">Extremadura</option>
+                <option value="ES-GA">Galicia</option>
+                <option value="ES-RI">La Rioja</option>
+                <option value="ES-MD">Madrid</option>
+                <option value="ES-MC">Murcia</option>
+                <option value="ES-NC">Navarra</option>
+                <option value="ES-PV">País Vasco</option>
+            </select>
+        </div>
+        <button onclick="obtenerFestivos()">Mostrar Festivos</button>
         <div id="calendario" class="calendar"></div>
         <nav>
             <a href="index.html">Volver al Inicio</a>
@@ -87,77 +49,53 @@
     </div>
 
     <script>
-        const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const API_KEY = '8c1ixta6OXmujOE9GlQLpEvRXnSsrc6o'; // Reemplaza con tu API key de Abstract o Calendarific
 
-        async function cargarFestivos() {
+        async function obtenerFestivos() {
             const anio = document.getElementById('anio').value;
-            const url = 'https://datos.madrid.es/egobfiles/MANUAL/300082/calendario.txt';
-            
+            const comunidad = document.getElementById('comunidad').value;
+            const calendarioDiv = document.getElementById('calendario');
+            calendarioDiv.innerHTML = 'Cargando...';
+
             try {
+                const url = `https://holidays.abstractapi.com/v1/?api_key=${API_KEY}&country=ES&year=${anio}&region=${comunidad}`;
                 const response = await fetch(url);
-                const texto = await response.text();
-                const festivos = parsearFestivos(texto, anio);
+                const festivos = await response.json();
+
                 mostrarCalendario(festivos, anio);
             } catch (error) {
-                console.error('Error al cargar los festivos:', error);
-                document.getElementById('calendario').innerHTML = 'Error al cargar los festivos. Por favor, intente de nuevo.';
+                console.error('Error al obtener los festivos:', error);
+                calendarioDiv.innerHTML = 'Error al cargar los festivos. Por favor, intente de nuevo.';
             }
-        }
-
-        function parsearFestivos(texto, anioSeleccionado) {
-            const lineas = texto.split('\n');
-            const festivos = [];
-            
-            lineas.forEach(linea => {
-                if (linea.startsWith(anioSeleccionado)) {
-                    const [fecha, motivo] = linea.split('\t');
-                    festivos.push({ fecha, motivo: motivo.trim() });
-                }
-            });
-
-            return festivos;
         }
 
         function mostrarCalendario(festivos, anio) {
             const calendarioDiv = document.getElementById('calendario');
             calendarioDiv.innerHTML = '';
 
-            for (let mes = 0; mes < 12; mes++) {
-                const nombreMes = meses[mes];
-                calendarioDiv.innerHTML += `<div class="month-header" style="grid-column: 1 / -1; text-align: center; font-weight: bold; margin: 10px 0;">${nombreMes} ${anio}</div>`;
+            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-                const primerDia = new Date(anio, mes, 1).getDay();
-                const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+            meses.forEach((mes, index) => {
+                const mesDiv = document.createElement('div');
+                mesDiv.innerHTML = `<h3>${mes} ${anio}</h3>`;
+                const diasMes = new Date(anio, index + 1, 0).getDate();
 
-                // Añadir días de la semana
-                diasSemana.forEach(dia => {
-                    calendarioDiv.innerHTML += `<div class="day-header">${dia}</div>`;
-                });
+                for (let dia = 1; dia <= diasMes; dia++) {
+                    const fecha = `${anio}-${(index + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                    const festivo = festivos.find(f => f.date === fecha);
 
-                // Añadir espacios en blanco para el primer día
-                for (let i = 0; i < (primerDia + 6) % 7; i++) {
-                    calendarioDiv.innerHTML += '<div class="day"></div>';
-                }
-
-                // Añadir días del mes
-                for (let dia = 1; dia <= diasEnMes; dia++) {
-                    const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                    const festivo = festivos.find(f => f.fecha === fecha);
-                    const claseFestivo = festivo ? 'festivo' : '';
-                    const motivoFestivo = festivo ? `<div class="motivo">${festivo.motivo}</div>` : '';
-
-                    calendarioDiv.innerHTML += `
-                        <div class="day ${claseFestivo}">
-                            <div>${dia}</div>
-                            ${motivoFestivo}
-                        </div>
+                    const diaDiv = document.createElement('div');
+                    diaDiv.className = festivo ? 'day festivo' : 'day';
+                    diaDiv.innerHTML = `
+                        <div>${dia}</div>
+                        ${festivo ? `<div class="motivo">${festivo.name}</div>` : ''}
                     `;
+                    mesDiv.appendChild(diaDiv);
                 }
-            }
-        }
 
-        window.onload = cargarFestivos;
+                calendarioDiv.appendChild(mesDiv);
+            });
+        }
     </script>
 </body>
 </html>
