@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Festivos por Comunidad</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .day {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            min-height: 80px;
+        }
+        .day-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .festivo {
+            background-color: #ffcccc;
+        }
+        .motivo {
+            font-size: 10px;
+            color: #666;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Calendario de Festivos por Comunidad</h2>
+        <div class="form-group">
+            <label for="comunidad">Seleccionar Comunidad Autónoma:</label>
+            <select id="comunidad" onchange="mostrarCalendario()">
+                <option value="">Seleccione una comunidad</option>
+                <option value="andalucia">Andalucía</option>
+                <option value="aragon">Aragón</option>
+                <option value="asturias">Asturias</option>
+                <option value="baleares">Baleares</option>
+                <option value="canarias">Canarias</option>
+                <option value="cantabria">Cantabria</option>
+                <option value="castilla_la_mancha">Castilla-La Mancha</option>
+                <option value="castilla_y_leon">Castilla y León</option>
+                <option value="cataluna">Cataluña</option>
+                <option value="comunidad_valenciana">Comunidad Valenciana</option>
+                <option value="extremadura">Extremadura</option>
+                <option value="galicia">Galicia</option>
+                <option value="la_rioja">La Rioja</option>
+                <option value="madrid">Madrid</option>
+                <option value="murcia">Murcia</option>
+                <option value="navarra">Navarra</option>
+                <option value="pais_vasco">País Vasco</option>
+            </select>
+        </div>
+        <div id="calendario" class="calendar"></div>
+        <nav>
+            <a href="index.html">Volver al Inicio</a>
+        </nav>
+    </div>
+
+    <script>
+        const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        // Ejemplo de festivos (deberías tener una base de datos o API real para esto)
+        const festivos = {
+            andalucia: [
+                { fecha: '2024-01-01', motivo: 'Año Nuevo' },
+                { fecha: '2024-01-06', motivo: 'Reyes Magos' },
+                { fecha: '2024-02-28', motivo: 'Día de Andalucía' },
+                // ... Añadir más festivos
+            ],
+            // ... Añadir festivos para otras comunidades
+        };
+
+        function mostrarCalendario() {
+            const comunidad = document.getElementById('comunidad').value;
+            const calendarioDiv = document.getElementById('calendario');
+            calendarioDiv.innerHTML = '';
+
+            if (!comunidad) return;
+
+            const festivosComunidad = festivos[comunidad] || [];
+            const anioActual = new Date().getFullYear();
+
+            for (let mes = 0; mes < 12; mes++) {
+                const nombreMes = meses[mes];
+                calendarioDiv.innerHTML += `<div class="month-header" style="grid-column: 1 / -1; text-align: center; font-weight: bold; margin: 10px 0;">${nombreMes} ${anioActual}</div>`;
+
+                const primerDia = new Date(anioActual, mes, 1).getDay();
+                const diasEnMes = new Date(anioActual, mes + 1, 0).getDate();
+
+                // Añadir días de la semana
+                diasSemana.forEach(dia => {
+                    calendarioDiv.innerHTML += `<div class="day-header">${dia}</div>`;
+                });
+
+                // Añadir espacios en blanco para el primer día
+                for (let i = 0; i < (primerDia + 6) % 7; i++) {
+                    calendarioDiv.innerHTML += '<div class="day"></div>';
+                }
+
+                // Añadir días del mes
+                for (let dia = 1; dia <= diasEnMes; dia++) {
+                    const fecha = `${anioActual}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                    const festivo = festivosComunidad.find(f => f.fecha === fecha);
+                    const claseFestivo = festivo ? 'festivo' : '';
+                    const motivoFestivo = festivo ? `<div class="motivo">${festivo.motivo}</div>` : '';
+
+                    calendarioDiv.innerHTML += `
+                        <div class="day ${claseFestivo}">
+                            <div>${dia}</div>
+                            ${motivoFestivo}
+                        </div>
+                    `;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
