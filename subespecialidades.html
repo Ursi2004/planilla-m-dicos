@@ -133,16 +133,36 @@
         };
 
         function cargarMedicos() {
-            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            medicoList.innerHTML = '';  // Limpiar el menú desplegable
-            medicos.forEach(medico => {
-                const option = document.createElement('option');
-                option.value = medico.correo;
-                option.textContent = `${medico.nombre} ${medico.apellidos}`;
-                medicoList.appendChild(option);
-            });
-        }
+    const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+    const subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+    
+    medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
+    medicos.forEach(medico => {
+        const option = document.createElement('option');
+        option.value = medico.correo;
+        option.textContent = `${medico.nombre} ${medico.apellidos}`;
+        medicoSelect.appendChild(option);
+    });
 
+    // Cargar subespecialidades del médico seleccionado
+    medicoSelect.addEventListener('change', function() {
+        const correoMedico = this.value;
+        const subespecialidades = subespecialidadesMedicos[correoMedico] || ["Pediatría General"];
+        
+        // Actualizar la lista de subespecialidades
+        actualizarListaSubespecialidades(subespecialidades);
+    });
+}
+
+function actualizarListaSubespecialidades(subespecialidades) {
+    const listaSubespecialidades = document.getElementById('listaSubespecialidades');
+    listaSubespecialidades.innerHTML = '';
+    subespecialidades.forEach(sub => {
+        const li = document.createElement('li');
+        li.textContent = sub;
+        listaSubespecialidades.appendChild(li);
+    });
+}
         function asignarSubespecialidades() {
             const correoMedico = medicoList.value;
             const subespecialidadesSeleccionadas = Array.from(document.getElementById('subespecialidades').selectedOptions).map(option => option.value);
