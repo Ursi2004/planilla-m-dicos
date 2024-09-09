@@ -185,6 +185,7 @@
             document.getElementById('calendarioSemanal').style.display = 'block';
             generarCalendarioSemanal(semanaSeleccionada);
             cargarConsultas();
+            cargarAsignacionesGuardadas(semanaSeleccionada);
         }
 
         function generarCalendarioSemanal(semana) {
@@ -345,6 +346,29 @@
 
             localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignaciones));
             alert("Asignaciones guardadas correctamente.");
+        }
+
+        function cargarAsignacionesGuardadas(semana) {
+            const asignacionesGuardadas = JSON.parse(localStorage.getItem(`asignaciones_${semana}`)) || {};
+            
+            document.querySelectorAll('.day').forEach((day, index) => {
+                const diaSemana = diasSemana[index];
+                const consultasDelDia = asignacionesGuardadas[diaSemana] || [];
+                
+                const dayContent = day.querySelector('.day-content');
+                dayContent.innerHTML = ''; // Limpiar el contenido existente
+                
+                consultasDelDia.forEach(consulta => {
+                    const consultaElement = document.createElement('div');
+                    consultaElement.className = 'consulta';
+                    consultaElement.draggable = true;
+                    consultaElement.id = `consulta-${consulta.id}`;
+                    consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
+                    consultaElement.addEventListener('dragstart', drag);
+                    consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
+                    dayContent.appendChild(consultaElement);
+                });
+            });
         }
 
         window.onload = function() {
