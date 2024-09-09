@@ -48,6 +48,9 @@
         .festivo-madrid {
             background-color: #ffffcc;
         }
+        .weekend {
+            background-color: #ffcccc;
+        }
         .motivo {
             font-size: 10px;
             color: #666;
@@ -122,6 +125,7 @@
 
                 for (let dia = 1; dia <= diasEnMes; dia++) {
                     const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                    const diaSemana = new Date(anio, mes, dia).getDay();
                     let clase = '';
                     let motivo = '';
 
@@ -131,6 +135,11 @@
                     } else if (festivosMadrid[fecha]) {
                         clase = 'festivo-madrid';
                         motivo = festivosMadrid[fecha];
+                    }
+
+                    // Añadir clase 'weekend' para sábados y domingos
+                    if (diaSemana === 0 || diaSemana === 6) {
+                        clase += ' weekend';
                     }
 
                     calendarioDiv.innerHTML += `
