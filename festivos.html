@@ -5,43 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario de Festivos por Comunidad</title>
     <style>
-        /* ... (mantener los estilos existentes) ... */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .day {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            min-height: 80px;
+        }
+        .day-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .festivo {
+            background-color: #ffcccc;
+        }
+        .motivo {
+            font-size: 10px;
+            color: #666;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Calendario de Festivos por Comunidad</h2>
         <div class="form-group">
-            <label for="anio">Seleccionar Año:</label>
-            <select id="anio">
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="comunidad">Seleccionar Comunidad Autónoma:</label>
-            <select id="comunidad">
+            <label for="region">Seleccionar Comunidad Autónoma:</label>
+            <select id="region" onchange="mostrarCalendario()">
                 <option value="">Seleccione una comunidad</option>
-                <option value="ES-AN">Andalucía</option>
-                <option value="ES-AR">Aragón</option>
-                <option value="ES-AS">Asturias</option>
-                <option value="ES-IB">Baleares</option>
-                <option value="ES-CN">Canarias</option>
-                <option value="ES-CB">Cantabria</option>
-                <option value="ES-CM">Castilla-La Mancha</option>
-                <option value="ES-CL">Castilla y León</option>
-                <option value="ES-CT">Cataluña</option>
-                <option value="ES-VC">Comunidad Valenciana</option>
-                <option value="ES-EX">Extremadura</option>
-                <option value="ES-GA">Galicia</option>
-                <option value="ES-RI">La Rioja</option>
-                <option value="ES-MD">Madrid</option>
-                <option value="ES-MC">Murcia</option>
-                <option value="ES-NC">Navarra</option>
-                <option value="ES-PV">País Vasco</option>
+                <option value="01">Andalucía</option>
+                <option value="02">Aragón</option>
+                <option value="03">Asturias</option>
+                <option value="04">Baleares</option>
+                <option value="05">Canarias</option>
+                <option value="06">Cantabria</option>
+                <option value="07">Castilla-La Mancha</option>
+                <option value="08">Castilla y León</option>
+                <option value="09">Cataluña</option>
+                <option value="10">Comunidad Valenciana</option>
+                <option value="11">Extremadura</option>
+                <option value="12">Galicia</option>
+                <option value="13">La Rioja</option>
+                <option value="14">Madrid</option>
+                <option value="15">Murcia</option>
+                <option value="16">Navarra</option>
+                <option value="17">País Vasco</option>
             </select>
         </div>
-        <button onclick="obtenerFestivos()">Mostrar Festivos</button>
         <div id="calendario" class="calendar"></div>
         <nav>
             <a href="index.html">Volver al Inicio</a>
@@ -49,53 +103,67 @@
     </div>
 
     <script>
-        const API_KEY = '8c1ixta6OXmujOE9GlQLpEvRXnSsrc6o'; // Reemplaza con tu API key de Abstract o Calendarific
+        const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        let festivos = [];
 
-        async function obtenerFestivos() {
-            const anio = document.getElementById('anio').value;
-            const comunidad = document.getElementById('comunidad').value;
-            const calendarioDiv = document.getElementById('calendario');
-            calendarioDiv.innerHTML = 'Cargando...';
-
+        async function cargarFestivos() {
             try {
-                const url = `https://holidays.abstractapi.com/v1/?api_key=${API_KEY}&country=ES&year=${anio}&region=${comunidad}`;
-                const response = await fetch(url);
-                const festivos = await response.json();
-
-                mostrarCalendario(festivos, anio);
+                const response = await fetch('2024.json');
+                festivos = await response.json();
             } catch (error) {
-                console.error('Error al obtener los festivos:', error);
-                calendarioDiv.innerHTML = 'Error al cargar los festivos. Por favor, intente de nuevo.';
+                console.error('Error al cargar los festivos:', error);
             }
         }
 
-        function mostrarCalendario(festivos, anio) {
+        function mostrarCalendario() {
+            const region = document.getElementById('region').value;
             const calendarioDiv = document.getElementById('calendario');
             calendarioDiv.innerHTML = '';
 
-            const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            if (!region) return;
 
-            meses.forEach((mes, index) => {
-                const mesDiv = document.createElement('div');
-                mesDiv.innerHTML = `<h3>${mes} ${anio}</h3>`;
-                const diasMes = new Date(anio, index + 1, 0).getDate();
+            const festivosRegion = festivos.filter(f => f.region === region || !f.region);
+            const anioActual = 2024;
 
-                for (let dia = 1; dia <= diasMes; dia++) {
-                    const fecha = `${anio}-${(index + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
-                    const festivo = festivos.find(f => f.date === fecha);
+            for (let mes = 0; mes < 12; mes++) {
+                const nombreMes = meses[mes];
+                calendarioDiv.innerHTML += `<div class="month-header" style="grid-column: 1 / -1; text-align: center; font-weight: bold; margin: 10px 0;">${nombreMes} ${anioActual}</div>`;
 
-                    const diaDiv = document.createElement('div');
-                    diaDiv.className = festivo ? 'day festivo' : 'day';
-                    diaDiv.innerHTML = `
-                        <div>${dia}</div>
-                        ${festivo ? `<div class="motivo">${festivo.name}</div>` : ''}
-                    `;
-                    mesDiv.appendChild(diaDiv);
+                const primerDia = new Date(anioActual, mes, 1).getDay();
+                const diasEnMes = new Date(anioActual, mes + 1, 0).getDate();
+
+                // Añadir días de la semana
+                diasSemana.forEach(dia => {
+                    calendarioDiv.innerHTML += `<div class="day-header">${dia}</div>`;
+                });
+
+                // Añadir espacios en blanco para el primer día
+                for (let i = 0; i < (primerDia + 6) % 7; i++) {
+                    calendarioDiv.innerHTML += '<div class="day"></div>';
                 }
 
-                calendarioDiv.appendChild(mesDiv);
-            });
+                // Añadir días del mes
+                for (let dia = 1; dia <= diasEnMes; dia++) {
+                    const fecha = `${anioActual}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                    const festivo = festivosRegion.find(f => f.date === fecha);
+                    const claseFestivo = festivo ? 'festivo' : '';
+                    const motivoFestivo = festivo ? `<div class="motivo">${festivo.name}</div>` : '';
+
+                    calendarioDiv.innerHTML += `
+                        <div class="day ${claseFestivo}">
+                            <div>${dia}</div>
+                            ${motivoFestivo}
+                        </div>
+                    `;
+                }
+            }
         }
+
+        window.onload = async function() {
+            await cargarFestivos();
+            mostrarCalendario();
+        };
     </script>
 </body>
 </html>
