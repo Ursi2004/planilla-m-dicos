@@ -132,8 +132,7 @@
         #miniCalendario .day.selected {
             background-color: #4CAF50;
             color: white;
-        }
-    </style>
+        }    </style>
 </head>
 <body>
     <div class="container">
@@ -187,6 +186,16 @@
         };
 
         let festivosManuales = {};
+
+        function cargarFestivos() {
+            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+        }
+
+        function guardarFestivos() {
+            localStorage.setItem('festivosNacionales', JSON.stringify(festivosNacionales));
+            localStorage.setItem('festivosMadrid', JSON.stringify(festivosMadrid));
+            localStorage.setItem('festivosManuales', JSON.stringify(festivosManuales));
+        }
 
         function generarCalendario() {
             const calendarioDiv = document.getElementById('calendario');
@@ -253,6 +262,7 @@
                 monthDiv.appendChild(daysDiv);
                 calendarioDiv.appendChild(monthDiv);
             }
+            guardarFestivos();
         }
 
         function agregarFestivo() {
@@ -317,6 +327,7 @@
         }
 
         window.onload = function() {
+            cargarFestivos();
             generarCalendario();
             document.getElementById('agregarFestivo').onclick = agregarFestivo;
             document.querySelector('.close').onclick = () => document.getElementById('modalFestivo').style.display = 'none';
