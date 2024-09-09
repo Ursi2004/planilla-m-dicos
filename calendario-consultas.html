@@ -133,6 +133,9 @@
             text-decoration: none;
             cursor: pointer;
         }
+        .holiday {
+            background-color: #ffcccb;
+        }
     </style>
 </head>
 <body>
@@ -168,7 +171,7 @@
             <button onclick="confirmarAsignacion()">Confirmar</button>
         </div>
     </div>
-        <script>
+    <script>
         const semanaInput = document.getElementById('semana');
         const calendarWeek = document.getElementById('calendarWeek');
         const consultasDisponibles = document.getElementById('consultasDisponibles');
@@ -189,19 +192,33 @@
             cargarConsultas();
             cargarAsignacionesGuardadas(semanaSeleccionada);
         }
-
         function generarCalendarioSemanal(semana) {
             calendarWeek.innerHTML = '';
             const [year, week] = semana.split('-W');
             const fechaInicio = getDateOfISOWeek(week, year);
 
+            const festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            const festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            const festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+
             diasSemana.forEach((dia, index) => {
                 const fecha = new Date(fechaInicio);
                 fecha.setDate(fecha.getDate() + index);
+                const fechaStr = fecha.toISOString().split('T')[0];
                 const dayElement = document.createElement('div');
                 dayElement.className = 'day';
+                
+                let holidayInfo = '';
+                if (festivosNacionales[fechaStr] || festivosMadrid[fechaStr]) {
+                    dayElement.classList.add('holiday');
+                    holidayInfo = '<br><small>Festivo</small>';
+                } else if (festivosManuales[fechaStr]) {
+                    dayElement.classList.add('holiday');
+                    holidayInfo = '<br><small>Festivo añadido</small>';
+                }
+
                 dayElement.innerHTML = `
-                    <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}</div>
+                    <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
                     <div class="day-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 `;
                 calendarWeek.appendChild(dayElement);
@@ -241,12 +258,16 @@
         function drag(ev) {
             ev.dataTransfer.setData("text/plain", ev.target.id);
         }
-
         function drop(ev) {
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text/plain");
             const consultaElement = document.getElementById(data);
             if (consultaElement) {
+                const dayElement = ev.target.closest('.day');
+                if (dayElement.classList.contains('holiday')) {
+                    alert("No se pueden asignar consultas en días festivos.");
+                    return;
+                }
                 consultaActual = JSON.parse(consultaElement.getAttribute('data-consulta'));
                 diaSeleccionado = ev.target.closest('.day-content');
                 mostrarModalSubespecialidad();
