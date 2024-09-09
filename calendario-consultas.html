@@ -361,8 +361,8 @@
                 
                 consultasDelDia.forEach(consulta => {
                     const consultaElement = document.createElement('div');
-                    consultaElement.className =
-                                            consultaElement.className = 'consulta';
+                    consultaElement
+                                        consultaElement.className = 'consulta';
                     consultaElement.draggable = true;
                     consultaElement.id = `consulta-${consulta.id}`;
                     consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
@@ -387,10 +387,32 @@
             const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
 
             const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrevia}`)) || {};
-            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignacionesPrevias));
+            
+            // En lugar de guardar, simplemente cargamos las asignaciones previas en el calendario
+            cargarAsignacionesEnCalendario(asignacionesPrevias);
+            
+            alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
+        }
 
-            cargarAsignacionesGuardadas(semanaSeleccionada);
-            alert("Asignaciones de la semana previa copiadas correctamente.");
+        function cargarAsignacionesEnCalendario(asignaciones) {
+            document.querySelectorAll('.day').forEach((day, index) => {
+                const diaSemana = diasSemana[index];
+                const consultasDelDia = asignaciones[diaSemana] || [];
+                
+                const dayContent = day.querySelector('.day-content');
+                dayContent.innerHTML = ''; // Limpiar el contenido existente
+                
+                consultasDelDia.forEach(consulta => {
+                    const consultaElement = document.createElement('div');
+                    consultaElement.className = 'consulta';
+                    consultaElement.draggable = true;
+                    consultaElement.id = `consulta-${consulta.id}`;
+                    consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
+                    consultaElement.addEventListener('dragstart', drag);
+                    consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
+                    dayContent.appendChild(consultaElement);
+                });
+            });
         }
 
         window.onload = function() {
