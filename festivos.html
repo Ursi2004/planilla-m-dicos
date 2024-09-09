@@ -51,6 +51,9 @@
         .weekend {
             background-color: #ffcccc;
         }
+        .festivo-manual {
+            background-color: #ccffcc;
+        }
         .motivo {
             font-size: 10px;
             color: #666;
@@ -63,18 +66,44 @@
             text-decoration: none;
             color: #4CAF50;
         }
+        .mini-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-top: 20px;
+            max-width: 300px;
+        }
+        .mini-day {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .mini-day.selected {
+            background-color: #ccffcc;
+        }
+        .btn {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Calendario de Festivos 2024 - Nacional y Comunidad de Madrid</h2>
         <div id="calendario" class="calendar"></div>
+        <h3>Añadir Festivos Manualmente</h3>
+        <div id="miniCalendario" class="mini-calendar"></div>
+        <button id="confirmarFestivo" class="btn">Confirmar Festivo</button>
         <nav>
             <a href="index.html">Volver al Inicio</a>
         </nav>
     </div>
-
-    <script>
+        <script>
         const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
         const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
@@ -104,6 +133,8 @@
             "2024-12-06": "Día de la Constitución Española",
             "2024-12-25": "Navidad"
         };
+
+        let festivosManuales = {};
 
         function generarCalendario() {
             const calendarioDiv = document.getElementById('calendario');
@@ -135,24 +166,87 @@
                     } else if (festivosMadrid[fecha]) {
                         clase = 'festivo-madrid';
                         motivo = festivosMadrid[fecha];
+                    } else if (festivosManuales[fecha]) {
+                        clase = 'festivo-manual';
+                        motivo = 'Añadido';
                     }
 
-                    // Añadir clase 'weekend' para sábados y domingos
                     if (diaSemana === 0 || diaSemana === 6) {
                         clase += ' weekend';
                     }
 
+                    let contenido = `
+                        <div>${dia}</div>
+                        ${motivo ? `<div class="motivo">${motivo}</div>` : ''}
+                    `;
+
+                    if (festivosManuales[fecha]) {
+                        contenido += `<button onclick="eliminarFestivo('${fecha}')">Eliminar festivo</button>`;
+                    }
+
                     calendarioDiv.innerHTML += `
-                        <div class="day ${clase}">
-                            <div>${dia}</div>
-                            ${motivo ? `<div class="motivo">${motivo}</div>` : ''}
+                        <div class="day ${clase}" data-fecha="${fecha}">
+                            ${contenido}
                         </div>
                     `;
                 }
             }
         }
 
-        window.onload = generarCalendario;
+        function generarMiniCalendario() {
+            const miniCalendarioDiv = document.getElementById('miniCalendario');
+            const anio = 2024;
+            const mesActual = new Date().getMonth();
+
+            miniCalendarioDiv.innerHTML = '';
+
+            diasSemana.forEach(dia => {
+                miniCalendarioDiv.innerHTML += `<div class="mini-day-header">${dia}</div>`;
+            });
+
+            const primerDia = new Date(anio, mesActual, 1).getDay();
+            const diasEnMes = new Date(anio, mesActual + 1, 0).getDate();
+
+            for (let i = 0; i < (primerDia + 6) % 7; i++) {
+                miniCalendarioDiv.innerHTML += '<div class="mini-day"></div>';
+            }
+
+            for (let dia = 1; dia <= diasEnMes; dia++) {
+                const fecha = `${anio}-${(mesActual + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                miniCalendarioDiv.innerHTML += `
+                    <div class="mini-day" onclick="seleccionarFecha('${fecha}')">${dia}</div>
+                `;
+            }
+        }
+
+        function seleccionarFecha(fecha) {
+            const dias = document.querySelectorAll('.mini-day');
+            dias.forEach(dia => dia.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        function confirmarFestivo() {
+            const diaSeleccionado = document.querySelector('.mini-day.selected');
+            if (diaSeleccionado) {
+                const fecha = diaSeleccionado.textContent;
+                const mesActual = new Date().getMonth();
+                const fechaCompleta = `2024-${(mesActual + 1).toString().padStart(2, '0')}-${fecha.padStart(2, '0')}`;
+                festivosManuales[fechaCompleta] = true;
+                generarCalendario();
+                generarMiniCalendario();
+            }
+        }
+
+        function eliminarFestivo(fecha) {
+            delete festivosManuales[fecha];
+            generarCalendario();
+        }
+
+        window.onload = function() {
+            generarCalendario();
+            generarMiniCalendario();
+            document.getElementById('confirmarFestivo').addEventListener('click', confirmarFestivo);
+        };
     </script>
 </body>
 </html>
