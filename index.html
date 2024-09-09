@@ -70,6 +70,18 @@
         .calendario .weekend {
             background-color: #f0f0f0;
         }
+        .calendario .selected-red {
+            background-color: #ffcccc;
+        }
+        .calendario .selected-yellow {
+            background-color: #ffffcc;
+        }
+        .calendario .festivo-nacional-madrid {
+            background-color: #ffa07a;
+        }
+        .calendario .festivo-manual {
+            background-color: #add8e6;
+        }
         .calendario .selected-red.festivo-nacional-madrid,
         .calendario .selected-yellow.festivo-nacional-madrid {
             background-image: linear-gradient(to bottom right, #ffcccc 50%, #ffa07a 50%);
@@ -77,6 +89,46 @@
         .calendario .selected-red.festivo-manual,
         .calendario .selected-yellow.festivo-manual {
             background-image: linear-gradient(to bottom right, #ffcccc 50%, #add8e6 50%);
+        }
+        .medico-list {
+            margin-top: 20px;
+        }
+        .medico-item {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -162,6 +214,7 @@
             <a href="festivos.html">Calendario de Festivos</a>
         </nav>
     </div>
+
     <script>
         const medicoList = document.getElementById('medicoList');
         const medicoSelect = document.getElementById('medico');
@@ -326,7 +379,7 @@
                 clase = clase.replace('selected-red', 'selected-yellow');
                 calendarioSeleccion[fecha] = 'amarillo';
             } else if (clase.includes('selected-yellow')) {
-                clase = clase.replace('selected-yellow', '');
+                clase = clase.replace('selected-yellow', '').trim();
                 delete calendarioSeleccion[fecha];
             } else {
                 clase += ' selected-red';
@@ -344,6 +397,7 @@
             }
             localStorage.setItem(`calendario_${correoMedico}`, JSON.stringify(calendarioSeleccion));
             alert("Cambios guardados correctamente.");
-        }    </script>
+        }
+    </script>
 </body>
 </html>
