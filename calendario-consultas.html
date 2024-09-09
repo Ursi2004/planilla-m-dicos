@@ -148,7 +148,7 @@
             <span class="close">&times;</span>
             <h3>Seleccionar Subespecialidad</h3>
             <select id="subespecialidadSelect"></select>
-            <button onclick="asignarSubespecialidad()">Asignar</button>
+            <button onclick="confirmarSubespecialidad()">Confirmar</button>
         </div>
     </div>
 
@@ -158,6 +158,7 @@
         const consultasDisponibles = document.getElementById('consultasDisponibles');
         const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
         let consultaActual;
+        let diaSeleccionado;
         const modal = document.getElementById('subespecialidadModal');
         const span = document.getElementsByClassName("close")[0];
         const subespecialidadSelect = document.getElementById('subespecialidadSelect');
@@ -229,6 +230,7 @@
             const consultaElement = document.getElementById(data);
             if (consultaElement) {
                 consultaActual = JSON.parse(consultaElement.getAttribute('data-consulta'));
+                diaSeleccionado = ev.target.closest('.day-content');
                 mostrarModalSubespecialidad();
             }
         }
@@ -249,7 +251,7 @@
             });
         }
 
-        function asignarSubespecialidad() {
+        function confirmarSubespecialidad() {
             const subespecialidadSeleccionada = subespecialidadSelect.value;
             if (subespecialidadSeleccionada) {
                 consultaActual.subespecialidad = subespecialidadSeleccionada;
@@ -260,7 +262,7 @@
                 newConsulta.textContent = `${consultaActual.nombre} (${consultaActual.inicio} - ${consultaActual.fin}) - ${subespecialidadSeleccionada}`;
                 newConsulta.addEventListener('dragstart', drag);
                 newConsulta.setAttribute('data-consulta', JSON.stringify(consultaActual));
-                event.target.closest('.day-content').appendChild(newConsulta);
+                diaSeleccionado.appendChild(newConsulta);
                 modal.style.display = "none";
             } else {
                 alert("Por favor, selecciona una subespecialidad.");
