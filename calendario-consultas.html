@@ -7,24 +7,53 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
             background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
+        h2 {
             text-align: center;
         }
-        .calendar {
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .calendar-week {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
+            gap: 5px;
             margin-top: 20px;
         }
         .day {
@@ -37,49 +66,77 @@
             text-align: center;
             margin-bottom: 10px;
         }
-        .consultas-disponibles {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
         .consulta {
             background-color: #4CAF50;
             color: white;
             padding: 5px;
             margin: 5px;
             cursor: move;
-            display: inline-block;
         }
-        .consulta-asignada {
-            background-color: #2196F3;
+        .consultas-disponibles {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Calendario de Consultas</h1>
-        <div class="calendar" id="calendar">
-            <!-- Los días de la semana se generarán aquí -->
+        <h2>Calendario de Consultas</h2>
+        <div class="form-group">
+            <label for="semana">Seleccionar Semana:</label>
+            <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
         </div>
-        <div class="consultas-disponibles" id="consultasDisponibles">
-            <h3>Consultas Disponibles</h3>
-            <!-- Las consultas se cargarán aquí -->
+        <div id="calendarioSemanal" style="display: none;">
+            <div class="calendar-week" id="calendarWeek"></div>
+            <div class="consultas-disponibles" id="consultasDisponibles">
+                <h3>Consultas Disponibles</h3>
+                <!-- Las consultas se cargarán aquí -->
+            </div>
         </div>
+        <nav>
+            <a href="index.html">Volver al Inicio</a>
+        </nav>
     </div>
 
     <script>
-        const calendar = document.getElementById('calendar');
+        const semanaInput = document.getElementById('semana');
+        const calendarWeek = document.getElementById('calendarWeek');
         const consultasDisponibles = document.getElementById('consultasDisponibles');
         const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-        function inicializarCalendario() {
-            diasSemana.forEach(dia => {
+        function mostrarCalendarioSemanal() {
+            const semanaSeleccionada = semanaInput.value;
+            if (!semanaSeleccionada) return;
+
+            document.getElementById('calendarioSemanal').style.display = 'block';
+            generarCalendarioSemanal(semanaSeleccionada);
+            cargarConsultas();
+        }
+
+        function generarCalendarioSemanal(semana) {
+            calendarWeek.innerHTML = '';
+            const fechaInicio = new Date(semana);
+            fechaInicio.setDate(fechaInicio.getDate() + 1); // Ajustar al lunes
+
+            diasSemana.forEach((dia, index) => {
+                const fecha = new Date(fechaInicio);
+                fecha.setDate(fecha.getDate() + index);
                 const dayElement = document.createElement('div');
                 dayElement.className = 'day';
-                dayElement.innerHTML = `<div class="day-header">${dia}</div>`;
-                dayElement.addEventListener('dragover', allowDrop);
-                dayElement.addEventListener('drop', drop);
-                calendar.appendChild(dayElement);
+                dayElement.innerHTML = `
+                    <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}</div>
+                    <div class="day-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                `;
+                calendarWeek.appendChild(dayElement);
             });
         }
 
@@ -109,14 +166,8 @@
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text");
             const consultaElement = document.getElementById(data);
-            ev.target.closest('.day').appendChild(consultaElement.cloneNode(true));
-            consultaElement.classList.add('consulta-asignada');
+            ev.target.closest('.day-content').appendChild(consultaElement.cloneNode(true));
         }
-
-        window.onload = function() {
-            inicializarCalendario();
-            cargarConsultas();
-        };
     </script>
 </body>
 </html>
