@@ -5,9 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario de Consultas</title>
     <style>
-        /* ... (mantener los estilos existentes) ... */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .calendar-week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .day {
+            border: 1px solid #ddd;
+            padding: 10px;
+            min-height: 100px;
+        }
+        .day-header {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
         .day-content {
-            min-height: 50px; /* Asegura que haya espacio para soltar las consultas */
+            min-height: 50px;
         }
         .consulta {
             background-color: #4CAF50;
@@ -16,6 +76,19 @@
             margin: 5px;
             cursor: move;
             display: inline-block;
+        }
+        .consultas-disponibles {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #4CAF50;
         }
     </style>
 </head>
@@ -109,7 +182,9 @@
             const data = ev.dataTransfer.getData("text");
             const consultaElement = document.getElementById(data);
             if (consultaElement) {
-                ev.target.closest('.day-content').appendChild(consultaElement.cloneNode(true));
+                const newConsulta = consultaElement.cloneNode(true);
+                newConsulta.addEventListener('dragstart', drag);
+                ev.target.closest('.day-content').appendChild(newConsulta);
             }
         }
     </script>
