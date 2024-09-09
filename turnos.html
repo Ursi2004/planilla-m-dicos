@@ -77,6 +77,17 @@
             text-align: center;
             margin-bottom: 5px;
         }
+        .turno-asignado {
+            background-color: #e6f3ff;
+            padding: 2px 5px;
+            margin: 2px 0;
+            font-size: 0.9em;
+        }
+        .eliminar-turno {
+            color: red;
+            cursor: pointer;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -106,7 +117,9 @@
     </div>
 
     <script>
-        // Generar opciones para las horas
+        let turnosCreados = [];
+        let turnosAsignados = {};
+
         function generarOpcionesHoras() {
             const horaInicio = document.getElementById('horaInicio');
             const horaFin = document.getElementById('horaFin');
@@ -119,48 +132,80 @@
             }
         }
 
-        // Crear un nuevo turno
         function crearTurno() {
             const nombre = document.getElementById('nombreTurno').value;
             const inicio = document.getElementById('horaInicio').value;
             const fin = document.getElementById('horaFin').value;
             
             if (nombre && inicio && fin) {
-                const turno = document.createElement('div');
-                turno.className = 'turno';
-                turno.draggable = true;
-                turno.innerHTML = `${nombre} (${inicio} - ${fin})`;
-                turno.addEventListener('dragstart', drag);
-                document.getElementById('turnosList').appendChild(turno);
+                const turno = { nombre, inicio, fin };
+                turnosCreados.push(turno);
+                actualizarListaTurnos();
                 
-                // Limpiar el formulario
                 document.getElementById('nombreTurno').value = '';
             } else {
                 alert('Por favor, complete todos los campos.');
             }
         }
 
-        // Funciones para arrastrar y soltar
-        function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.innerHTML);
+        function actualizarListaTurnos() {
+            const turnosList = document.getElementById('turnosList');
+            turnosList.innerHTML = '';
+            turnosCreados.forEach((turno, index) => {
+                const turnoElement = document.createElement('div');
+                turnoElement.className = 'turno';
+                turnoElement.draggable = true;
+                turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                turnoElement.addEventListener('dragstart', (e) => drag(e, index));
+                turnosList.appendChild(turnoElement);
+            });
+        }
+
+        function drag(ev, index) {
+            ev.dataTransfer.setData("text/plain", index);
         }
 
         function allowDrop(ev) {
             ev.preventDefault();
         }
 
-        function drop(ev) {
+        function drop(ev, dia) {
             ev.preventDefault();
-            var data = ev.dataTransfer.getData("text");
-            ev.target.innerHTML += `<div class="turno">${data}</div>`;
+            const turnoIndex = ev.dataTransfer.getData("text");
+            const turno = turnosCreados[turnoIndex];
+            
+            if (!turnosAsignados[dia]) {
+                turnosAsignados[dia] = [];
+            }
+            turnosAsignados[dia].push(turno);
+            
+            actualizarCalendario();
+            copiarTurnosADiasSimilares(dia);
         }
 
-        // Generar calendario
+        function copiarTurnosADiasSimilares(diaOriginal) {
+            const diaSemana = diaOriginal % 7;
+            for (let i = diaSemana; i <= 31; i += 7) {
+                if (i !== diaOriginal && turnosAsignados[diaOriginal]) {
+                    turnosAsignados[i] = [...turnosAsignados[diaOriginal]];
+                }
+            }
+            actualizarCalendario();
+        }
+
+        function eliminarTurno(dia, index) {
+            turnosAsignados[dia].splice(index, 1);
+            if (turnosAsignados[dia].length === 0) {
+                delete turnosAsignados[dia];
+            }
+            actualizarCalendario();
+        }
+
         function generarCalendario() {
             const calendario = document.getElementById('calendario');
+            calendario.innerHTML = '';
             const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
             
-            // Agregar encabezados de días
             diasSemana.forEach(dia => {
                 const diaHeader = document.createElement('div');
                 diaHeader.className = 'dia-header';
@@ -168,18 +213,34 @@
                 calendario.appendChild(diaHeader);
             });
             
-            // Agregar días del mes (ejemplo para 31 días)
             for (let i = 1; i <= 31; i++) {
                 const dia = document.createElement('div');
                 dia.className = 'dia';
                 dia.innerHTML = `<div class="dia-header">${i}</div>`;
-                dia.ondrop = drop;
+                dia.ondrop = (e) => drop(e, i);
                 dia.ondragover = allowDrop;
                 calendario.appendChild(dia);
             }
         }
 
-        // Inicializar
+        function actualizarCalendario() {
+            const dias = document.querySelectorAll('.dia');
+            dias.forEach((dia, index) => {
+                const diaNum = index + 1;
+                const turnosDia = turnosAsignados[diaNum] || [];
+                let turnosHTML = '';
+                turnosDia.forEach((turno, turnoIndex) => {
+                    turnosHTML += `
+                        <div class="turno-asignado">
+                            ${turno.nombre} (${turno.inicio} - ${turno.fin})
+                            <span class="eliminar-turno" onclick="eliminarTurno(${diaNum}, ${turnoIndex})">❌</span>
+                        </div>
+                    `;
+                });
+                dia.innerHTML = `<div class="dia-header">${diaNum}</div>${turnosHTML}`;
+            });
+        }
+
         window.onload = function() {
             generarOpcionesHoras();
             generarCalendario();
