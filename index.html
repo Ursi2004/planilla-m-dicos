@@ -181,27 +181,33 @@
         };
 
         function agregarMedico() {
-            const nombre = document.getElementById('nombre').value;
-            const apellidos = document.getElementById('apellidos').value;
-            const correo = document.getElementById('correo').value;
+    const nombre = document.getElementById('nombre').value;
+    const apellidos = document.getElementById('apellidos').value;
+    const correo = document.getElementById('correo').value;
 
-            if (nombre && apellidos && correo) {
-                const medico = { nombre, apellidos, correo };
-                
-                let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-                medicos.push(medico);
-                localStorage.setItem('medicos', JSON.stringify(medicos));
+    if (nombre && apellidos && correo) {
+        const medico = { nombre, apellidos, correo };
+        
+        // Guardar médico en localStorage
+        let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+        medicos.push(medico);
+        localStorage.setItem('medicos', JSON.stringify(medicos));
 
-                mostrarMedico(medico);
-                actualizarSelectMedicos();
+        // Asignar "Pediatría General" como subespecialidad predeterminada
+        let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+        subespecialidadesMedicos[correo] = ["Pediatría General"];
+        localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
 
-                document.getElementById('nombre').value = '';
-                document.getElementById('apellidos').value = '';
-                document.getElementById('correo').value = '';
-            } else {
-                alert('Por favor, rellena todos los campos.');
-            }
-        }
+        mostrarMedico(medico);
+        actualizarSelectMedicos();
+
+        document.getElementById('nombre').value = '';
+        document.getElementById('apellidos').value = '';
+        document.getElementById('correo').value = '';
+    } else {
+        alert('Por favor, rellena todos los campos.');
+    }
+}
 
         function mostrarMedico(medico) {
             const medicoItem = document.createElement('div');
