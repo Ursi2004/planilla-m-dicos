@@ -117,6 +117,22 @@
             text-decoration: none;
             color: #4CAF50;
         }
+        #miniCalendario {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-top: 10px;
+        }
+        #miniCalendario .day {
+            cursor: pointer;
+        }
+        #miniCalendario .day:hover {
+            background-color: #e0e0e0;
+        }
+        #miniCalendario .day.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -175,6 +191,8 @@
         function generarCalendario() {
             const calendarioDiv = document.getElementById('calendario');
             const anio = 2024;
+
+            calendarioDiv.innerHTML = '';
 
             for (let mes = 0; mes < 12; mes++) {
                 const monthDiv = document.createElement('div');
@@ -272,20 +290,23 @@
 
             for (let dia = 1; dia <= diasEnMes; dia++) {
                 const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+                const clase = festivosManuales[fecha] ? 'selected' : '';
                 miniCalendario.innerHTML += `
-                    <div class="day" onclick="seleccionarFecha('${fecha}', this)">${dia}</div>
+                    <div class="day ${clase}" onclick="toggleFestivo('${fecha}', this)">${dia}</div>
                 `;
             }
         }
 
-        function seleccionarFecha(fecha, elemento) {
-            document.querySelectorAll('#miniCalendario .day').forEach(el => el.classList.remove('selected'));
-            elemento.classList.add('selected');
-            document.getElementById('confirmarFestivo').onclick = () => confirmarFestivo(fecha);
+        function toggleFestivo(fecha, elemento) {
+            elemento.classList.toggle('selected');
+            if (elemento.classList.contains('selected')) {
+                festivosManuales[fecha] = true;
+            } else {
+                delete festivosManuales[fecha];
+            }
         }
 
-        function confirmarFestivo(fecha) {
-            festivosManuales[fecha] = true;
+        function confirmarFestivo() {
             document.getElementById('modalFestivo').style.display = 'none';
             generarCalendario();
         }
@@ -299,6 +320,7 @@
             generarCalendario();
             document.getElementById('agregarFestivo').onclick = agregarFestivo;
             document.querySelector('.close').onclick = () => document.getElementById('modalFestivo').style.display = 'none';
+            document.getElementById('confirmarFestivo').onclick = confirmarFestivo;
         };
     </script>
 </body>
