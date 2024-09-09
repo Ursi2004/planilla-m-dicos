@@ -159,8 +159,10 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h3>Seleccionar Subespecialidad</h3>
-            <select id="subespecialidadSelect"></select>
-            <button onclick="confirmarSubespecialidad()">Confirmar</button>
+            <select id="subespecialidadSelect" onchange="cargarMedicosSubespecialidad()"></select>
+            <h3>Seleccionar Médico</h3>
+            <select id="medicoSelect"></select>
+            <button onclick="confirmarAsignacion()">Confirmar</button>
         </div>
     </div>
 
@@ -174,6 +176,7 @@
         const modal = document.getElementById('subespecialidadModal');
         const span = document.getElementsByClassName("close")[0];
         const subespecialidadSelect = document.getElementById('subespecialidadSelect');
+        const medicoSelect = document.getElementById('medicoSelect');
 
         function mostrarCalendarioSemanal() {
             const semanaSeleccionada = semanaInput.value;
@@ -254,7 +257,7 @@
 
         function cargarSubespecialidades() {
             const subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
-            subespecialidadSelect.innerHTML = '';
+            subespecialidadSelect.innerHTML = '<option value="">Seleccione una subespecialidad</option>';
             subespecialidades.forEach(sub => {
                 const option = document.createElement('option');
                 option.value = sub;
@@ -263,22 +266,57 @@
             });
         }
 
-        function confirmarSubespecialidad() {
+        function cargarMedicosSubespecialidad() {
+            const subespecialidad = subespecialidadSelect.value;
+            const subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+            const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            
+            medicoSelect.innerHTML = '<option value="cualquiera">Cualquiera</option>';
+            
+            medicos.forEach(medico => {
+                if (subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(subespecialidad)) {
+                    const option = document.createElement('option');
+                    option.value = medico.correo;
+                    option.textContent = `${medico.nombre} ${medico.apellidos}`;
+                    medicoSelect.appendChild(option);
+                }
+            });
+        }
+
+        function confirmarAsignacion() {
             const subespecialidadSeleccionada = subespecialidadSelect.value;
-            if (subespecialidadSeleccionada) {
-                consultaActual.subespecialidad = subespecialidadSeleccionada;
-                const newConsulta = document.createElement('div');
-                newConsulta.className = 'consulta';
-                newConsulta.draggable = true;
-                newConsulta.id = `consulta-${consultaActual.id}`;
-                newConsulta.textContent = `${consultaActual.nombre} (${consultaActual.inicio} - ${consultaActual.fin}) - ${subespecialidadSeleccionada}`;
-                newConsulta.addEventListener('dragstart', drag);
-                newConsulta.setAttribute('data-consulta', JSON.stringify(consultaActual));
-                diaSeleccionado.appendChild(newConsulta);
-                modal.style.display = "none";
-            } else {
+            const medicoSeleccionado = medicoSelect.value;
+
+            if (!subespecialidadSeleccionada) {
                 alert("Por favor, selecciona una subespecialidad.");
+                return;
             }
+
+            let medicoAsignado;
+            if (medicoSeleccionado === "cualquiera") {
+                const medicosDisponibles = Array.from(medicoSelect.options).slice(1);
+                if (medicosDisponibles.length === 0) {
+                    alert("No hay médicos disponibles para esta subespecialidad.");
+                    return;
+                }
+                const medicoAleatorio = medicosDisponibles[Math.floor(Math.random() * medicosDisponibles.length)];
+                medicoAsignado = medicoAleatorio.textContent;
+            } else {
+                medicoAsignado = medicoSelect.options[medicoSelect.selectedIndex].textContent;
+            }
+
+            consultaActual.subespecialidad = subespecialidadSeleccionada;
+            consultaActual.medico = medicoAsignado;
+
+            const newConsulta = document.createElement('div');
+            newConsulta.className = 'consulta';
+            newConsulta.draggable = true;
+            newConsulta.id = `consulta-${consultaActual.id}`;
+            newConsulta.textContent = `${consultaActual.nombre} (${consultaActual.inicio} - ${consultaActual.fin}) - ${subespecialidadSeleccionada} - ${medicoAsignado}`;
+            newConsulta.addEventListener('dragstart', drag);
+            newConsulta.setAttribute('data-consulta', JSON.stringify(consultaActual));
+            diaSeleccionado.appendChild(newConsulta);
+            modal.style.display = "none";
         }
 
         function eliminarConsulta(ev) {
