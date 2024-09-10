@@ -207,6 +207,12 @@
             });
         }
 
+        function eliminarTurnoCreado(id) {
+            turnosCreados = turnosCreados.filter(t => t.id !== id);
+            localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+            actualizarListaTurnos();
+        }
+
         function drag(ev) {
             ev.dataTransfer.setData("text/plain", ev.target.id);
         }
@@ -249,6 +255,14 @@
             }
         }
 
+        function mostrarCalendarioSemanal() {
+            const semanaSeleccionada = document.getElementById('semana').value;
+            if (!semanaSeleccionada) return;
+
+            generarCalendario(semanaSeleccionada);
+            cargarTurnosAsignados(semanaSeleccionada);
+        }
+
         function generarCalendario(semana) {
             const calendario = document.getElementById('calendario');
             calendario.innerHTML = '';
@@ -279,6 +293,21 @@
             actualizarCalendario();
         }
 
+        function getDateOfISOWeek(week, year) {
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dayOfWeek = simple.getDay();
+            const ISOweekStart = simple;
+            if (dayOfWeek <= 4)
+                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else
+                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+            return ISOweekStart;
+        }
+
+        function esFestivo(fecha) {
+            return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
+        }
+
         function actualizarCalendario() {
             const dias = document.querySelectorAll('.dia-content');
             dias.forEach((dia) => {
@@ -296,6 +325,12 @@
                     dia.appendChild(turnoElement);
                 });
             });
+        }
+
+        function cargarFestivos() {
+            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
         }
 
         function guardarTurnosAsignados() {
