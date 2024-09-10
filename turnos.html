@@ -166,6 +166,7 @@
             if (nombre && inicio && fin) {
                 const turno = { nombre, inicio, fin };
                 turnosCreados.push(turno);
+                localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
                 actualizarListaTurnos();
                 
                 document.getElementById('nombreTurno').value = '';
@@ -301,12 +302,19 @@
             if (turnosGuardados) {
                 turnosAsignados = JSON.parse(turnosGuardados);
                 actualizarCalendario();
+            } else {
+                turnosAsignados = {};
             }
         }
 
         window.onload = function() {
             generarOpcionesHoras();
             cargarFestivos();
+            const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
+            if (turnosCreadosGuardados) {
+                turnosCreados = JSON.parse(turnosCreadosGuardados);
+                actualizarListaTurnos();
+            }
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
