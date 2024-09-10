@@ -132,6 +132,8 @@
         
         <div id="calendario"></div>
 
+        <button onclick="guardarTurnosAsignados()">Guardar Asignaciones</button>
+
         <nav>
             <a href="index.html">Volver al Inicio</a>
         </nav>
@@ -193,23 +195,23 @@
             ev.preventDefault();
         }
 
-        function drop(ev, dia) {
+        function drop(ev, fecha) {
             ev.preventDefault();
             const turnoIndex = ev.dataTransfer.getData("text");
             const turno = turnosCreados[turnoIndex];
             
-            if (!turnosAsignados[dia]) {
-                turnosAsignados[dia] = [];
+            if (!turnosAsignados[fecha]) {
+                turnosAsignados[fecha] = [];
             }
-            turnosAsignados[dia].push(turno);
+            turnosAsignados[fecha].push(turno);
             
             actualizarCalendario();
         }
 
-        function eliminarTurno(dia, index) {
-            turnosAsignados[dia].splice(index, 1);
-            if (turnosAsignados[dia].length === 0) {
-                delete turnosAsignados[dia];
+        function eliminarTurno(fecha, index) {
+            turnosAsignados[fecha].splice(index, 1);
+            if (turnosAsignados[fecha].length === 0) {
+                delete turnosAsignados[fecha];
             }
             actualizarCalendario();
         }
@@ -219,6 +221,7 @@
             if (!semanaSeleccionada) return;
 
             generarCalendario(semanaSeleccionada);
+            cargarTurnosAsignados(semanaSeleccionada);
         }
 
         function generarCalendario(semana) {
@@ -285,6 +288,20 @@
             festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
             festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
             festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+        }
+
+        function guardarTurnosAsignados() {
+            const semanaSeleccionada = document.getElementById('semana').value;
+            localStorage.setItem(`turnosAsignados_${semanaSeleccionada}`, JSON.stringify(turnosAsignados));
+            alert('Turnos asignados guardados correctamente.');
+        }
+
+        function cargarTurnosAsignados(semana) {
+            const turnosGuardados = localStorage.getItem(`turnosAsignados_${semana}`);
+            if (turnosGuardados) {
+                turnosAsignados = JSON.parse(turnosGuardados);
+                actualizarCalendario();
+            }
         }
 
         window.onload = function() {
