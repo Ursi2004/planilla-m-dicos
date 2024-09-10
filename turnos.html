@@ -113,6 +113,7 @@
     </style>
 </head>
 <body>
+<body>
     <div class="container">
         <h1>Turnos - Calendario Interactivo</h1>
         
@@ -267,7 +268,7 @@
             const calendario = document.getElementById('calendario');
             calendario.innerHTML = '';
             const [year, week] = semana.split('-W');
-            const primerDia = getDateOfISOWeek(week, year);
+            const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
             const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
             
             diasSemana.forEach((dia, index) => {
@@ -291,6 +292,17 @@
             });
             
             actualizarCalendario();
+        }
+
+        function getDateOfISOWeek(week, year) {
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dayOfWeek = simple.getDay();
+            const ISOweekStart = new Date(simple);
+            if (dayOfWeek <= 4)
+                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else
+                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+            return ISOweekStart;
         }
 
         function actualizarCalendario() {
