@@ -104,10 +104,6 @@
         }
         .festivo {
             background-color: #ffcccb;
-        }        .eliminar-turno {
-            color: red;
-            cursor: pointer;
-            margin-left: 5px;
         }
     </style>
 </head>
@@ -141,8 +137,8 @@
         
         <div id="calendario"></div>
 
-        <div class="papelera" ondrop="eliminarTurnoAsignado(event)" ondragover="allowDrop(event)">
-            Arrastre aquí para eliminar el turno asignado
+        <div class="papelera" ondrop="eliminarTurno(event)" ondragover="allowDrop(event)">
+            Arrastre aquí para eliminar el turno
         </div>
 
         <button onclick="guardarTurnosAsignados()">Guardar Asignaciones</button>
@@ -160,7 +156,15 @@
         let festivosManuales = {};
 
         function generarOpcionesHoras() {
-            // ... (mantener la función existente) ...
+            const horaInicio = document.getElementById('horaInicio');
+            const horaFin = document.getElementById('horaFin');
+            for (let i = 0; i < 24; i++) {
+                for (let j = 0; j < 60; j += 30) {
+                    const hora = `${i.toString().padStart(2, '0')}:${j.toString().padStart(2, '0')}`;
+                    horaInicio.innerHTML += `<option value="${hora}">${hora}</option>`;
+                    horaFin.innerHTML += `<option value="${hora}">${hora}</option>`;
+                }
+            }
         }
 
         function crearTurno() {
@@ -187,24 +191,15 @@
                 const turnoElement = document.createElement('div');
                 turnoElement.className = 'turno';
                 turnoElement.draggable = true;
-                turnoElement.innerHTML = `
-                    ${turno.nombre} (${turno.inicio} - ${turno.fin})
-                    <span class="eliminar-turno" onclick="eliminarTurnoCreado(${turno.id})">❌</span>
-                `;
+                turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
                 turnoElement.setAttribute('data-turno-id', turno.id);
                 turnoElement.addEventListener('dragstart', drag);
                 turnosList.appendChild(turnoElement);
             });
         }
 
-        function eliminarTurnoCreado(id) {
-            turnosCreados = turnosCreados.filter(t => t.id !== id);
-            localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
-            actualizarListaTurnos();
-        }
-
         function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.getAttribute('data-turno-id'));
+            ev.dataTransfer.setData("text/plain", ev.target.getAttribute('data-turno-id'));
         }
 
         function allowDrop(ev) {
@@ -225,7 +220,7 @@
             }
         }
 
-        function eliminarTurnoAsignado(ev) {
+        function eliminarTurno(ev) {
             ev.preventDefault();
             const turnoId = ev.dataTransfer.getData("text");
             Object.keys(turnosAsignados).forEach(fecha => {
