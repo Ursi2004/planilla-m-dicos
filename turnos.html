@@ -116,7 +116,6 @@
     <div class="container">
         <h1>Turnos - Calendario Interactivo</h1>
         
-        
         <div class="form-group">
             <label for="nombreTurno">Nombre del Turno:</label>
             <input type="text" id="nombreTurno" placeholder="Ej: Turno Mañana">
@@ -138,7 +137,7 @@
             <label for="semana">Seleccionar Semana:</label>
             <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
         </div>
-
+        
         <div id="turnosList"></div>
         
         <div id="calendario"></div>
@@ -285,8 +284,9 @@
                     <div class="dia-header">${dia}<br>${fecha.toLocaleDateString()}</div>
                     <div class="dia-content" data-fecha="${fechaStr}"></div>
                 `;
-                diaElement.querySelector('.dia-content').addEventListener('drop', drop);
-                diaElement.querySelector('.dia-content').addEventListener('dragover', allowDrop);
+                const diaContent = diaElement.querySelector('.dia-content');
+                diaContent.addEventListener('drop', drop);
+                diaContent.addEventListener('dragover', allowDrop);
                 calendario.appendChild(diaElement);
             });
             
