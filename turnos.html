@@ -192,13 +192,14 @@
                 turnoElement.className = 'turno';
                 turnoElement.draggable = true;
                 turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
-                turnoElement.addEventListener('dragstart', (e) => drag(e, turno.id));
+                turnoElement.setAttribute('data-turno-id', turno.id);
+                turnoElement.addEventListener('dragstart', drag);
                 turnosList.appendChild(turnoElement);
             });
         }
 
-        function drag(ev, turnoId) {
-            ev.dataTransfer.setData("text/plain", turnoId);
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.getAttribute('data-turno-id'));
         }
 
         function allowDrop(ev) {
@@ -289,7 +290,7 @@
                 let turnosHTML = '';
                 turnosDia.forEach((turno) => {
                     turnosHTML += `
-                        <div class="turno-asignado" draggable="true" ondragstart="drag(event, '${turno.id}')">
+                        <div class="turno-asignado" draggable="true" ondragstart="drag(event)" data-turno-id="${turno.id}">
                             ${turno.nombre} (${turno.inicio} - ${turno.fin})
                         </div>
                     `;
