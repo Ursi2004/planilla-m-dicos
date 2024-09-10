@@ -216,7 +216,188 @@
     </div>
 
     <script>
-        // ... (rest of the JavaScript code remains unchanged)
+        const medicoList = document.getElementById('medicoList');
+        const medicoSelect = document.getElementById('medico');
+        const calendarioDiv = document.getElementById('calendario');
+        const mesSelect = document.getElementById('mes');
+        const anioSelect = document.getElementById('anio');
+        let calendarioSeleccion = {};
+        let festivosNacionales = {};
+        let festivosMadrid = {};
+        let festivosManuales = {};
+
+        window.onload = function() {
+            cargarMedicos();
+            cargarAnios();
+            cargarFestivos();
+            generarCalendario();
+        };
+
+        function agregarMedico() {
+            const nombre = document.getElementById('nombre').value;
+            const apellidos = document.getElementById('apellidos').value;
+            const correo = document.getElementById('correo').value;
+
+            if (nombre && apellidos && correo) {
+                const medico = { nombre, apellidos, correo };
+                
+                let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+                medicos.push(medico);
+                localStorage.setItem('medicos', JSON.stringify(medicos));
+
+                let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+                subespecialidadesMedicos[correo] = ["Pediatría General"];
+                localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+
+                mostrarMedico(medico);
+                actualizarSelectMedicos();
+
+                document.getElementById('nombre').value = '';
+                document.getElementById('apellidos').value = '';
+                document.getElementById('correo').value = '';
+            } else {
+                alert('Por favor, rellena todos los campos.');
+            }
+        }
+
+        function mostrarMedico(medico) {
+            const medicoItem = document.createElement('div');
+            medicoItem.classList.add('medico-item');
+            medicoItem.innerHTML = `
+                <span>${medico.nombre} ${medico.apellidos} - ${medico.correo}</span>
+                <button class="delete-btn" onclick="eliminarMedico('${medico.correo}')">Eliminar</button>
+            `;
+            medicoList.appendChild(medicoItem);
+        }
+
+        function cargarMedicos() {
+            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            medicoList.innerHTML = '';
+            medicos.forEach(medico => {
+                mostrarMedico(medico);
+            });
+            actualizarSelectMedicos();
+        }
+
+        function actualizarSelectMedicos() {
+            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
+            medicos.forEach(medico => {
+                const option = document.createElement('option');
+                option.value = medico.correo;
+                option.textContent = `${medico.nombre} ${medico.apellidos}`;
+                medicoSelect.appendChild(option);
+            });
+        }
+
+        function eliminarMedico(correo) {
+            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            medicos = medicos.filter(m => m.correo !== correo);
+            localStorage.setItem('medicos', JSON.stringify(medicos));
+
+            cargarMedicos();
+        }
+
+        function cargarAnios() {
+            const anioActual = new Date().getFullYear();
+            for (let i = anioActual - 2; i <= anioActual + 2; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                anioSelect.appendChild(option);
+            }
+            anioSelect.value = anioActual;
+        }
+
+        function cargarFestivos() {
+            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+        }
+
+        function cargarCalendario() {
+            const correoMedico = medicoSelect.value;
+            if (correoMedico) {
+                calendarioSeleccion = JSON.parse(localStorage.getItem(`calendario_${correoMedico}`)) || {};
+            } else {
+                calendarioSeleccion = {};
+            }
+            generarCalendario();
+        }
+
+        function generarCalendario() {
+            const mes = parseInt(mesSelect.value);
+            const anio = parseInt(anioSelect.value);
+            const correoMedico = medicoSelect.value;
+
+            if (!correoMedico) {
+                calendarioDiv.innerHTML = '<p>Por favor, seleccione un médico.</p>';
+                return;
+            }
+
+            const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const primerDia = new Date(anio, mes, 1).getDay();
+            const ultimoDia = new Date(anio, mes + 1, 0).getDate();
+
+            let calendarioHTML = diasSemana.map(dia => `<div class="header">${dia}</div>`).join('');
+
+            let diaActual = 1;
+            for (let i = 0; i < 42; i++) {
+                if (i < (primerDia === 0 ? 6 : primerDia - 1) || diaActual > ultimoDia) {
+                    calendarioHTML += '<div></div>';
+                } else {
+                    const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${diaActual.toString().padStart(2, '0')}`;
+                    let clase = calendarioSeleccion[fecha] === 'rojo' ? 'selected-red' : 
+                                calendarioSeleccion[fecha] === 'amarillo' ? 'selected-yellow' : '';
+                    const esFinDeSemana = i % 7 === 5 || i % 7 === 6 ? 'weekend' : '';
+
+                    if (festivosNacionales[fecha] || festivosMadrid[fecha]) {
+                        clase += ' festivo-nacional-madrid';
+                    } else if (festivosManuales[fecha]) {
+                        clase += ' festivo-manual';
+                    }
+
+                    let contenido = diaActual;
+                    if (festivosNacionales[fecha] || festivosMadrid[fecha]) {
+                        contenido += '<br><small>Festivo</small>';
+                    } else if (festivosManuales[fecha]) {
+                        contenido += '<br><small>Añadido</small>';
+                    }
+
+                    calendarioHTML += `<div class="day ${esFinDeSemana} ${clase}" onclick="seleccionarDia(this, '${fecha}')">${contenido}</div>`;
+                    diaActual++;
+                }
+            }
+
+            calendarioDiv.innerHTML = calendarioHTML;
+        }
+
+        function seleccionarDia(elemento, fecha) {
+            let clase = elemento.className;
+
+            if (clase.includes('selected-red')) {
+                clase = clase.replace('selected-red', 'selected-yellow');
+                calendarioSeleccion[fecha] = 'amarillo';
+            } else if (clase.includes('selected-yellow')) {
+                clase = clase.replace('selected-yellow', '').trim();
+                delete calendarioSeleccion[fecha];
+            } else {
+                clase += ' selected-red';
+                calendarioSeleccion[fecha] = 'rojo';
+            }
+
+            elemento.className = clase;
+        }
+
+        function guardarCambios() {
+            const correoMedico = medicoSelect.value;
+            if (!correoMedico) {
+                alert("Por favor, selecciona un médico.");
+                return;
+            }
+            localStorage.setItem(`calendario_${correoMedico}`, JSON.stringify(calendarioSeleccion));
+            alert("Cambios guardados correctamente.");
+        }
     </script>
 </body>
 </html>
