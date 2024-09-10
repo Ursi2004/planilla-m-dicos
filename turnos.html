@@ -104,11 +104,13 @@
         }
         .festivo {
             background-color: #ffcccb;
-        }        .eliminar-turno {
+        }
+        .eliminar-turno {
             color: red;
             cursor: pointer;
             margin-left: 5px;
-        }    </style>
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -194,7 +196,10 @@
                 const turnoElement = document.createElement('div');
                 turnoElement.className = 'turno';
                 turnoElement.draggable = true;
-                turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                turnoElement.innerHTML = `
+                    ${turno.nombre} (${turno.inicio} - ${turno.fin})
+                    <span class="eliminar-turno" onclick="eliminarTurnoCreado(${turno.id})">❌</span>
+                `;
                 turnoElement.id = `turno-${turno.id}`;
                 turnoElement.setAttribute('data-turno', JSON.stringify(turno));
                 turnoElement.addEventListener('dragstart', drag);
