@@ -200,6 +200,9 @@
         const medicoSelect = document.getElementById('medicoSelect');
 
         let consultas = [];
+        let festivosNacionales = {};
+        let festivosMadrid = {};
+        let festivosManuales = {};
 
         function generarOpcionesHoras() {
             const horaInicio = document.getElementById('horaInicio');
@@ -245,10 +248,6 @@
             const [year, week] = semana.split('-W');
             const fechaInicio = getDateOfISOWeek(parseInt(week), parseInt(year));
 
-            const festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
-            const festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
-            const festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
-
             diasSemana.forEach((dia, index) => {
                 const fecha = new Date(fechaInicio);
                 fecha.setDate(fecha.getDate() + index);
@@ -267,7 +266,7 @@
 
                 dayElement.innerHTML = `
                     <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
-                    <div class="day-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="day-content" data-fecha="${fechaStr}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 `;
                 calendarWeek.appendChild(dayElement);
             });
@@ -276,11 +275,8 @@
         function getDateOfISOWeek(week, year) {
             const simple = new Date(year, 0, 1 + (week - 1) * 7);
             const dayOfWeek = simple.getDay();
-            const ISOweekStart = simple;
-            if (dayOfWeek <= 4)
-                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-            else
-                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+            const ISOweekStart = new Date(simple);
+            ISOweekStart.setDate(simple.getDate() - dayOfWeek + 1);
             return ISOweekStart;
         }
 
@@ -341,10 +337,11 @@
 
             const asignaciones = {};
             document.querySelectorAll('.day').forEach((day, index) => {
+                const fecha = day.querySelector('.day-content').getAttribute('data-fecha');
                 const consultas = Array.from(day.querySelectorAll('.consulta')).map(consulta => {
                     return JSON.parse(consulta.getAttribute('data-consulta'));
                 });
-                asignaciones[diasSemana[index]] = consultas;
+                asignaciones[fecha] = consultas;
             });
 
             localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignaciones));
@@ -354,11 +351,10 @@
         function cargarAsignacionesGuardadas(semana) {
             const asignacionesGuardadas = JSON.parse(localStorage.getItem(`asignaciones_${semana}`)) || {};
             
-            document.querySelectorAll('.day').forEach((day, index) => {
-                const diaSemana = diasSemana[index];
-                const consultasDelDia = asignacionesGuardadas[diaSemana] || [];
+            document.querySelectorAll('.day-content').forEach((dayContent) => {
+                const fecha = dayContent.getAttribute('data-fecha');
+                const consultasDelDia = asignacionesGuardadas[fecha] || [];
                 
-                const dayContent = day.querySelector('.day-content');
                 dayContent.innerHTML = ''; // Limpiar el contenido existente
                 
                 consultasDelDia.forEach(consulta => {
@@ -367,7 +363,6 @@
                     consultaElement.draggable = true;
                     consultaElement.id = `consulta-${consulta.id}`;
                     consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
-                    consultaElement.addEventListener('dragstart', drag);
                     consultaElement.addEventListener('dragstart', drag);
                     consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
                     dayContent.appendChild(consultaElement);
@@ -396,11 +391,10 @@
         }
 
         function cargarAsignacionesEnCalendario(asignaciones) {
-            document.querySelectorAll('.day').forEach((day, index) => {
-                const diaSemana = diasSemana[index];
-                const consultasDelDia = asignaciones[diaSemana] || [];
+            document.querySelectorAll('.day-content').forEach((dayContent) => {
+                const fecha = dayContent.getAttribute('data-fecha');
+                const consultasDelDia = asignaciones[fecha] || [];
                 
-                const dayContent = day.querySelector('.day-content');
                 dayContent.innerHTML = ''; // Limpiar el contenido existente
                 
                 consultasDelDia.forEach(consulta => {
@@ -485,8 +479,15 @@
             modal.style.display = "none";
         }
 
+        function cargarFestivos() {
+            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+        }
+
         window.onload = function() {
             generarOpcionesHoras();
+            cargarFestivos();
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             semanaInput.value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
