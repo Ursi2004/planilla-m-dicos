@@ -214,10 +214,7 @@
         }
 
         function drag(ev) {
-            ev.dataTransfer.setData("application/json", JSON.stringify({
-                id: ev.target.id,
-                turno: ev.target.getAttribute('data-turno')
-            }));
+            ev.dataTransfer.setData("text/plain", ev.target.id);
         }
 
         function allowDrop(ev) {
@@ -226,10 +223,10 @@
 
         function drop(ev) {
             ev.preventDefault();
-            const data = JSON.parse(ev.dataTransfer.getData("application/json"));
-            const turnoElement = document.getElementById(data.id);
+            const data = ev.dataTransfer.getData("text/plain");
+            const turnoElement = document.getElementById(data);
             if (turnoElement) {
-                const turno = JSON.parse(data.turno);
+                const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
                 const diaContent = ev.target.closest('.dia-content');
                 if (diaContent) {
                     const fecha = diaContent.getAttribute('data-fecha');
@@ -296,21 +293,6 @@
             actualizarCalendario();
         }
 
-        function getDateOfISOWeek(week, year) {
-            const simple = new Date(year, 0, 1 + (week - 1) * 7);
-            const dayOfWeek = simple.getDay();
-            const ISOweekStart = simple;
-            if (dayOfWeek <= 4)
-                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-            else
-                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-            return ISOweekStart;
-        }
-
-        function esFestivo(fecha) {
-            return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
-        }
-
         function actualizarCalendario() {
             const dias = document.querySelectorAll('.dia-content');
             dias.forEach((dia) => {
@@ -373,6 +355,7 @@
             var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
             return weekNo;
         }
+
     </script>
 </body>
 </html>
