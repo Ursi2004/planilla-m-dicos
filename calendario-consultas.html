@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Consultas</title>
+    <title>Calendario de Turnos</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -71,7 +71,7 @@
         .day-content {
             min-height: 50px;
         }
-        .consulta {
+        .turno {
             background-color: #4CAF50;
             color: white;
             padding: 5px;
@@ -79,7 +79,7 @@
             cursor: move;
             display: inline-block;
         }
-        .consultas-disponibles {
+        .turnos-disponibles {
             margin-top: 20px;
             padding: 10px;
             border: 1px solid #ddd;
@@ -101,38 +101,6 @@
             text-decoration: none;
             color: #4CAF50;
         }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
-        }
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
         .holiday {
             background-color: #ffcccb;
         }
@@ -140,11 +108,11 @@
 </head>
 <body>
     <div class="container">
-        <h2>Calendario de Consultas</h2>
+        <h2>Calendario de Turnos</h2>
         
         <div class="form-group">
-            <label for="nombreConsulta">Nombre de la Consulta:</label>
-            <input type="text" id="nombreConsulta" placeholder="Ej: Consulta General">
+            <label for="nombreTurno">Nombre del Turno:</label>
+            <input type="text" id="nombreTurno" placeholder="Ej: Turno Mañana">
         </div>
         <div class="form-group">
             <label for="horaInicio">Desde:</label>
@@ -154,7 +122,7 @@
             <label for="horaFin">Hasta:</label>
             <select id="horaFin"></select>
         </div>
-        <button class="btn" onclick="crearConsulta()">Crear Consulta</button>
+        <button class="btn" onclick="crearTurno()">Crear Turno</button>
 
         <div class="form-group">
             <label for="semana">Seleccionar Semana:</label>
@@ -163,11 +131,11 @@
         </div>
         <div id="calendarioSemanal" style="display: none;">
             <div class="calendar-week" id="calendarWeek"></div>
-            <div class="consultas-disponibles" id="consultasDisponibles">
-                <h3>Consultas Disponibles</h3>
+            <div class="turnos-disponibles" id="turnosDisponibles">
+                <h3>Turnos Disponibles</h3>
             </div>
-            <div class="papelera" ondrop="eliminarConsulta(event)" ondragover="allowDrop(event)">
-                Arrastre aquí para eliminar consulta
+            <div class="papelera" ondrop="eliminarTurno(event)" ondragover="allowDrop(event)">
+                Arrastre aquí para eliminar turno
             </div>
         </div>
         <button class="btn" onclick="guardarAsignaciones()">Guardar Asignaciones</button>
@@ -176,30 +144,13 @@
         </nav>
     </div>
 
-    <div id="subespecialidadModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Seleccionar Subespecialidad</h3>
-            <select id="subespecialidadSelect" onchange="cargarMedicosSubespecialidad()"></select>
-            <h3>Seleccionar Médico</h3>
-            <select id="medicoSelect"></select>
-            <button onclick="confirmarAsignacion()">Confirmar</button>
-        </div>
-    </div>
-
     <script>
         const semanaInput = document.getElementById('semana');
         const calendarWeek = document.getElementById('calendarWeek');
-        const consultasDisponibles = document.getElementById('consultasDisponibles');
+        const turnosDisponibles = document.getElementById('turnosDisponibles');
         const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-        let consultaActual;
-        let diaSeleccionado;
-        const modal = document.getElementById('subespecialidadModal');
-        const span = document.getElementsByClassName("close")[0];
-        const subespecialidadSelect = document.getElementById('subespecialidadSelect');
-        const medicoSelect = document.getElementById('medicoSelect');
-
-        let consultas = [];
+        let turnosCreados = [];
+        let turnosAsignados = {};
         let festivosNacionales = {};
         let festivosMadrid = {};
         let festivosManuales = {};
@@ -216,21 +167,35 @@
             }
         }
 
-        function crearConsulta() {
-            const nombre = document.getElementById('nombreConsulta').value;
+        function crearTurno() {
+            const nombre = document.getElementById('nombreTurno').value;
             const inicio = document.getElementById('horaInicio').value;
             const fin = document.getElementById('horaFin').value;
             
             if (nombre && inicio && fin) {
-                const consulta = { id: Date.now(), nombre, inicio, fin };
-                consultas.push(consulta);
-                localStorage.setItem('consultas', JSON.stringify(consultas));
-                cargarConsultas();
+                const turno = { id: Date.now(), nombre, inicio, fin };
+                turnosCreados.push(turno);
+                localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+                actualizarTurnosDisponibles();
                 
-                document.getElementById('nombreConsulta').value = '';
+                document.getElementById('nombreTurno').value = '';
             } else {
                 alert('Por favor, complete todos los campos.');
             }
+        }
+
+        function actualizarTurnosDisponibles() {
+            turnosDisponibles.innerHTML = '<h3>Turnos Disponibles</h3>';
+            turnosCreados.forEach(turno => {
+                const turnoElement = document.createElement('div');
+                turnoElement.className = 'turno';
+                turnoElement.draggable = true;
+                turnoElement.id = `turno-${turno.id}`;
+                turnoElement.textContent = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                turnoElement.addEventListener('dragstart', drag);
+                turnoElement.setAttribute('data-turno', JSON.stringify(turno));
+                turnosDisponibles.appendChild(turnoElement);
+            });
         }
 
         function mostrarCalendarioSemanal() {
@@ -239,7 +204,7 @@
 
             document.getElementById('calendarioSemanal').style.display = 'block';
             generarCalendarioSemanal(semanaSeleccionada);
-            cargarConsultas();
+            actualizarTurnosDisponibles();
             cargarAsignacionesGuardadas(semanaSeleccionada);
         }
 
@@ -280,21 +245,6 @@
             return ISOweekStart;
         }
 
-        function cargarConsultas() {
-            consultas = JSON.parse(localStorage.getItem('consultas')) || [];
-            consultasDisponibles.innerHTML = '<h3>Consultas Disponibles</h3>';
-            consultas.forEach(consulta => {
-                const consultaElement = document.createElement('div');
-                consultaElement.className = 'consulta';
-                consultaElement.draggable = true;
-                consultaElement.id = `consulta-${consulta.id}`;
-                consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin})`;
-                consultaElement.addEventListener('dragstart', drag);
-                consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
-                consultasDisponibles.appendChild(consultaElement);
-            });
-        }
-
         function allowDrop(ev) {
             ev.preventDefault();
         }
@@ -306,25 +256,29 @@
         function drop(ev) {
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text/plain");
-            const consultaElement = document.getElementById(data);
-            if (consultaElement) {
+            const turnoElement = document.getElementById(data);
+            if (turnoElement) {
                 const dayElement = ev.target.closest('.day');
                 if (dayElement.classList.contains('holiday')) {
-                    alert("No se pueden asignar consultas en días festivos.");
+                    alert("No se pueden asignar turnos en días festivos.");
                     return;
                 }
-                consultaActual = JSON.parse(consultaElement.getAttribute('data-consulta'));
-                diaSeleccionado = ev.target.closest('.day-content');
-                mostrarModalSubespecialidad();
+                const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
+                const fecha = ev.target.closest('.day-content').getAttribute('data-fecha');
+                if (!turnosAsignados[fecha]) {
+                    turnosAsignados[fecha] = [];
+                }
+                turnosAsignados[fecha].push({...turno});
+                actualizarCalendario();
             }
         }
 
-        function eliminarConsulta(ev) {
+        function eliminarTurno(ev) {
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text/plain");
-            const consultaElement = document.getElementById(data);
-            if (consultaElement) {
-                consultaElement.remove();
+            const turnoElement = document.getElementById(data);
+            if (turnoElement) {
+                turnoElement.remove();
             }
         }
 
@@ -335,37 +289,32 @@
                 return;
             }
 
-            const asignaciones = {};
-            document.querySelectorAll('.day-content').forEach((dayContent) => {
-                const fecha = dayContent.getAttribute('data-fecha');
-                const consultas = Array.from(dayContent.querySelectorAll('.consulta')).map(consulta => {
-                    return JSON.parse(consulta.getAttribute('data-consulta'));
-                });
-                asignaciones[fecha] = consultas;
-            });
-
-            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignaciones));
+            localStorage.setItem(`turnosAsignados_${semanaSeleccionada}`, JSON.stringify(turnosAsignados));
             alert("Asignaciones guardadas correctamente.");
         }
 
         function cargarAsignacionesGuardadas(semana) {
-            const asignacionesGuardadas = JSON.parse(localStorage.getItem(`asignaciones_${semana}`)) || {};
-            
+            const asignacionesGuardadas = JSON.parse(localStorage.getItem(`turnosAsignados_${semana}`)) || {};
+            turnosAsignados = asignacionesGuardadas;
+            actualizarCalendario();
+        }
+
+        function actualizarCalendario() {
             document.querySelectorAll('.day-content').forEach((dayContent) => {
                 const fecha = dayContent.getAttribute('data-fecha');
-                const consultasDelDia = asignacionesGuardadas[fecha] || [];
+                const turnosDelDia = turnosAsignados[fecha] || [];
                 
-                dayContent.innerHTML = ''; // Limpiar el contenido existente
+                dayContent.innerHTML = '';
                 
-                consultasDelDia.forEach(consulta => {
-                    const consultaElement = document.createElement('div');
-                    consultaElement.className = 'consulta';
-                    consultaElement.draggable = true;
-                    consultaElement.id = `consulta-${consulta.id}`;
-                    consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
-                    consultaElement.addEventListener('dragstart', drag);
-                    consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
-                    dayContent.appendChild(consultaElement);
+                turnosDelDia.forEach(turno => {
+                    const turnoElement = document.createElement('div');
+                    turnoElement.className = 'turno';
+                    turnoElement.draggable = true;
+                    turnoElement.id = `turno-asignado-${turno.id}`;
+                    turnoElement.textContent = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                    turnoElement.addEventListener('dragstart', drag);
+                    turnoElement.setAttribute('data-turno', JSON.stringify(turno));
+                    dayContent.appendChild(turnoElement);
                 });
             });
         }
@@ -380,103 +329,15 @@
             const [year, week] = semanaSeleccionada.split('-W');
             const semanaPreviaNum = parseInt(week) - 1;
             const semanaPreviaYear = semanaPreviaNum > 0 ? year : parseInt(year) - 1;
-            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52; // Asumiendo que el año anterior tiene 52 semanas
+            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52;
             const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
 
-            const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrevia}`)) || {};
+            const asignacionesPrevias = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaPrevia}`)) || {};
             
-            cargarAsignacionesEnCalendario(asignacionesPrevias);
+            turnosAsignados = {...asignacionesPrevias};
+            actualizarCalendario();
             
             alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
-        }
-
-        function cargarAsignacionesEnCalendario(asignaciones) {
-            document.querySelectorAll('.day-content').forEach((dayContent) => {
-                const fecha = dayContent.getAttribute('data-fecha');
-                const consultasDelDia = asignaciones[fecha] || [];
-                
-                dayContent.innerHTML = ''; // Limpiar el contenido existente
-                
-                consultasDelDia.forEach(consulta => {
-                    const consultaElement = document.createElement('div');
-                    consultaElement.className = 'consulta';
-                    consultaElement.draggable = true;
-                    consultaElement.id = `consulta-${consulta.id}`;
-                    consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
-                    consultaElement.addEventListener('dragstart', drag);
-                    consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
-                    dayContent.appendChild(consultaElement);
-                });
-            });
-        }
-
-        function mostrarModalSubespecialidad() {
-            cargarSubespecialidades();
-            modal.style.display = "block";
-        }
-
-        function cargarSubespecialidades() {
-            const subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
-            subespecialidadSelect.innerHTML = '<option value="">Seleccione una subespecialidad</option>';
-            subespecialidades.forEach(sub => {
-                const option = document.createElement('option');
-                option.value = sub;
-                option.textContent = sub;
-                subespecialidadSelect.appendChild(option);
-            });
-        }
-
-        function cargarMedicosSubespecialidad() {
-            const subespecialidad = subespecialidadSelect.value;
-            const subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            
-            medicoSelect.innerHTML = '<option value="cualquiera">Cualquiera</option>';
-            
-            medicos.forEach(medico => {
-                if (subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(subespecialidad)) {
-                    const option = document.createElement('option');
-                    option.value = medico.correo;
-                    option.textContent = `${medico.nombre} ${medico.apellidos}`;
-                    medicoSelect.appendChild(option);
-                }
-            });
-        }
-
-        function confirmarAsignacion() {
-            const subespecialidadSeleccionada = subespecialidadSelect.value;
-            const medicoSeleccionado = medicoSelect.value;
-
-            if (!subespecialidadSeleccionada) {
-                alert("Por favor, selecciona una subespecialidad.");
-                return;
-            }
-
-            let medicoAsignado;
-            if (medicoSeleccionado === "cualquiera") {
-                const medicosDisponibles = Array.from(medicoSelect.options).slice(1);
-                if (medicosDisponibles.length === 0) {
-                    alert("No hay médicos disponibles para esta subespecialidad.");
-                    return;
-                }
-                const medicoAleatorio = medicosDisponibles[Math.floor(Math.random() * medicosDisponibles.length)];
-                medicoAsignado = medicoAleatorio.textContent;
-            } else {
-                medicoAsignado = medicoSelect.options[medicoSelect.selectedIndex].textContent;
-            }
-
-            consultaActual.subespecialidad = subespecialidadSeleccionada;
-            consultaActual.medico = medicoAsignado;
-
-            const newConsulta = document.createElement('div');
-            newConsulta.className = 'consulta';
-            newConsulta.draggable = true;
-            newConsulta.id = `consulta-${consultaActual.id}`;
-            newConsulta.textContent = `${consultaActual.nombre} (${consultaActual.inicio} - ${consultaActual.fin}) - ${subespecialidadSeleccionada} - ${medicoAsignado}`;
-            newConsulta.addEventListener('dragstart', drag);
-            newConsulta.setAttribute('data-consulta', JSON.stringify(consultaActual));
-            diaSeleccionado.appendChild(newConsulta);
-            modal.style.display = "none";
         }
 
         function cargarFestivos() {
@@ -488,6 +349,11 @@
         window.onload = function() {
             generarOpcionesHoras();
             cargarFestivos();
+            const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
+            if (turnosCreadosGuardados) {
+                turnosCreados = JSON.parse(turnosCreadosGuardados);
+                actualizarTurnosDisponibles();
+            }
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             semanaInput.value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
@@ -500,16 +366,6 @@
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
             var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
             return weekNo;
-        }
-
-        span.onclick = function() {
-            modal.style.display = "none";
-        }
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
         }
     </script>
 </body>
