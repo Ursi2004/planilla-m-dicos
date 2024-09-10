@@ -82,11 +82,16 @@
             padding: 2px 5px;
             margin: 2px 0;
             font-size: 0.9em;
+            cursor: move;
         }
-        .eliminar-turno {
-            color: red;
-            cursor: pointer;
-            margin-left: 5px;
+        .papelera {
+            width: 100%;
+            height: 50px;
+            background-color: #ffcccc;
+            border: 2px dashed #ff0000;
+            text-align: center;
+            line-height: 50px;
+            margin-top: 20px;
         }
         nav {
             margin-top: 20px;
@@ -132,6 +137,10 @@
         
         <div id="calendario"></div>
 
+        <div class="papelera" ondrop="eliminarTurno(event)" ondragover="allowDrop(event)">
+            Arrastre aquí para eliminar el turno
+        </div>
+
         <button onclick="guardarTurnosAsignados()">Guardar Asignaciones</button>
 
         <nav>
@@ -164,7 +173,7 @@
             const fin = document.getElementById('horaFin').value;
             
             if (nombre && inicio && fin) {
-                const turno = { nombre, inicio, fin };
+                const turno = { id: Date.now(), nombre, inicio, fin };
                 turnosCreados.push(turno);
                 localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
                 actualizarListaTurnos();
@@ -178,18 +187,18 @@
         function actualizarListaTurnos() {
             const turnosList = document.getElementById('turnosList');
             turnosList.innerHTML = '';
-            turnosCreados.forEach((turno, index) => {
+            turnosCreados.forEach((turno) => {
                 const turnoElement = document.createElement('div');
                 turnoElement.className = 'turno';
                 turnoElement.draggable = true;
                 turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
-                turnoElement.addEventListener('dragstart', (e) => drag(e, index));
+                turnoElement.addEventListener('dragstart', (e) => drag(e, turno.id));
                 turnosList.appendChild(turnoElement);
             });
         }
 
-        function drag(ev, index) {
-            ev.dataTransfer.setData("text/plain", index);
+        function drag(ev, turnoId) {
+            ev.dataTransfer.setData("text/plain", turnoId);
         }
 
         function allowDrop(ev) {
@@ -198,22 +207,27 @@
 
         function drop(ev, fecha) {
             ev.preventDefault();
-            const turnoIndex = ev.dataTransfer.getData("text");
-            const turno = turnosCreados[turnoIndex];
+            const turnoId = ev.dataTransfer.getData("text");
+            const turno = turnosCreados.find(t => t.id.toString() === turnoId);
             
-            if (!turnosAsignados[fecha]) {
-                turnosAsignados[fecha] = [];
+            if (turno) {
+                if (!turnosAsignados[fecha]) {
+                    turnosAsignados[fecha] = [];
+                }
+                turnosAsignados[fecha].push(turno);
+                actualizarCalendario();
             }
-            turnosAsignados[fecha].push(turno);
-            
-            actualizarCalendario();
         }
 
-        function eliminarTurno(fecha, index) {
-            turnosAsignados[fecha].splice(index, 1);
-            if (turnosAsignados[fecha].length === 0) {
-                delete turnosAsignados[fecha];
-            }
+        function eliminarTurno(ev) {
+            ev.preventDefault();
+            const turnoId = ev.dataTransfer.getData("text");
+            Object.keys(turnosAsignados).forEach(fecha => {
+                turnosAsignados[fecha] = turnosAsignados[fecha].filter(t => t.id.toString() !== turnoId);
+                if (turnosAsignados[fecha].length === 0) {
+                    delete turnosAsignados[fecha];
+                }
+            });
             actualizarCalendario();
         }
 
@@ -273,11 +287,10 @@
                 const fecha = dia.parentNode.querySelector('.dia-header').textContent.split('\n')[1];
                 const turnosDia = turnosAsignados[fecha] || [];
                 let turnosHTML = '';
-                turnosDia.forEach((turno, turnoIndex) => {
+                turnosDia.forEach((turno) => {
                     turnosHTML += `
-                        <div class="turno-asignado">
+                        <div class="turno-asignado" draggable="true" ondragstart="drag(event, '${turno.id}')">
                             ${turno.nombre} (${turno.inicio} - ${turno.fin})
-                            <span class="eliminar-turno" onclick="eliminarTurno('${fecha}', ${turnoIndex})">❌</span>
                         </div>
                     `;
                 });
