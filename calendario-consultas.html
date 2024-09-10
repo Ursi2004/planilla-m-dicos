@@ -276,7 +276,7 @@
             const simple = new Date(year, 0, 1 + (week - 1) * 7);
             const dayOfWeek = simple.getDay();
             const ISOweekStart = new Date(simple);
-            ISOweekStart.setDate(simple.getDate() - dayOfWeek + 1);
+            ISOweekStart.setDate(simple.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
             return ISOweekStart;
         }
 
@@ -336,9 +336,9 @@
             }
 
             const asignaciones = {};
-            document.querySelectorAll('.day').forEach((day, index) => {
-                const fecha = day.querySelector('.day-content').getAttribute('data-fecha');
-                const consultas = Array.from(day.querySelectorAll('.consulta')).map(consulta => {
+            document.querySelectorAll('.day-content').forEach((dayContent) => {
+                const fecha = dayContent.getAttribute('data-fecha');
+                const consultas = Array.from(dayContent.querySelectorAll('.consulta')).map(consulta => {
                     return JSON.parse(consulta.getAttribute('data-consulta'));
                 });
                 asignaciones[fecha] = consultas;
