@@ -116,6 +116,7 @@
     <div class="container">
         <h1>Turnos - Calendario Interactivo</h1>
         
+        
         <div class="form-group">
             <label for="nombreTurno">Nombre del Turno:</label>
             <input type="text" id="nombreTurno" placeholder="Ej: Turno Mañana">
@@ -137,7 +138,7 @@
             <label for="semana">Seleccionar Semana:</label>
             <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
         </div>
-        
+
         <div id="turnosList"></div>
         
         <div id="calendario"></div>
@@ -227,12 +228,15 @@
             const turnoElement = document.getElementById(data);
             if (turnoElement) {
                 const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
-                const fecha = ev.target.closest('.dia-content').getAttribute('data-fecha');
-                if (!turnosAsignados[fecha]) {
-                    turnosAsignados[fecha] = [];
+                const diaContent = ev.target.closest('.dia-content');
+                if (diaContent) {
+                    const fecha = diaContent.getAttribute('data-fecha');
+                    if (!turnosAsignados[fecha]) {
+                        turnosAsignados[fecha] = [];
+                    }
+                    turnosAsignados[fecha].push(turno);
+                    actualizarCalendario();
                 }
-                turnosAsignados[fecha].push(turno);
-                actualizarCalendario();
             }
         }
 
@@ -279,8 +283,10 @@
                 }
                 diaElement.innerHTML = `
                     <div class="dia-header">${dia}<br>${fecha.toLocaleDateString()}</div>
-                    <div class="dia-content" data-fecha="${fechaStr}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="dia-content" data-fecha="${fechaStr}"></div>
                 `;
+                diaElement.querySelector('.dia-content').addEventListener('drop', drop);
+                diaElement.querySelector('.dia-content').addEventListener('dragover', allowDrop);
                 calendario.appendChild(diaElement);
             });
             
