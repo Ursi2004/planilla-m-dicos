@@ -227,8 +227,8 @@
             const turnoElement = document.getElementById(data);
             if (turnoElement) {
                 const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
-                const diaContent = ev.target.closest('.dia-content');
-                if (diaContent) {
+                const diaContent = ev.target.closest('.dia-content') || ev.target;
+                if (diaContent.classList.contains('dia-content')) {
                     const fecha = diaContent.getAttribute('data-fecha');
                     if (!turnosAsignados[fecha]) {
                         turnosAsignados[fecha] = [];
