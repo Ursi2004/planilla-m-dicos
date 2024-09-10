@@ -113,6 +113,7 @@
     </style>
 </head>
 <body>
+<body>
     <div class="container">
         <h1>Turnos - Calendario Interactivo</h1>
         
@@ -214,7 +215,10 @@
         }
 
         function drag(ev) {
-            ev.dataTransfer.setData("text/plain", ev.target.id);
+            ev.dataTransfer.setData("application/json", JSON.stringify({
+                id: ev.target.id,
+                turno: ev.target.getAttribute('data-turno')
+            }));
         }
 
         function allowDrop(ev) {
@@ -223,10 +227,10 @@
 
         function drop(ev) {
             ev.preventDefault();
-            const data = ev.dataTransfer.getData("text/plain");
-            const turnoElement = document.getElementById(data);
+            const data = JSON.parse(ev.dataTransfer.getData("application/json"));
+            const turnoElement = document.getElementById(data.id);
             if (turnoElement) {
-                const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
+                const turno = JSON.parse(data.turno);
                 const diaContent = ev.target.closest('.dia-content');
                 if (diaContent) {
                     const fecha = diaContent.getAttribute('data-fecha');
@@ -241,10 +245,10 @@
 
         function eliminarTurnoAsignado(ev) {
             ev.preventDefault();
-            const data = ev.dataTransfer.getData("text/plain");
-            const turnoElement = document.getElementById(data);
+            const data = JSON.parse(ev.dataTransfer.getData("application/json"));
+            const turnoElement = document.getElementById(data.id);
             if (turnoElement && turnoElement.classList.contains('turno-asignado')) {
-                const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
+                const turno = JSON.parse(data.turno);
                 Object.keys(turnosAsignados).forEach(fecha => {
                     turnosAsignados[fecha] = turnosAsignados[fecha].filter(t => t.id !== turno.id);
                     if (turnosAsignados[fecha].length === 0) {
@@ -253,14 +257,6 @@
                 });
                 actualizarCalendario();
             }
-        }
-
-        function mostrarCalendarioSemanal() {
-            const semanaSeleccionada = document.getElementById('semana').value;
-            if (!semanaSeleccionada) return;
-
-            generarCalendario(semanaSeleccionada);
-            cargarTurnosAsignados(semanaSeleccionada);
         }
 
         function generarCalendario(semana) {
@@ -291,21 +287,6 @@
             });
             
             actualizarCalendario();
-        }
-
-        function getDateOfISOWeek(week, year) {
-            const simple = new Date(year, 0, 1 + (week - 1) * 7);
-            const dayOfWeek = simple.getDay();
-            const ISOweekStart = simple;
-            if (dayOfWeek <= 4)
-                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-            else
-                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-            return ISOweekStart;
-        }
-
-        function esFestivo(fecha) {
-            return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
         }
 
         function actualizarCalendario() {
