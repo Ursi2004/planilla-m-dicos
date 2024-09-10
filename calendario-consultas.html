@@ -243,7 +243,7 @@
         function generarCalendarioSemanal(semana) {
             calendarWeek.innerHTML = '';
             const [year, week] = semana.split('-W');
-            const fechaInicio = getDateOfISOWeek(week, year);
+            const fechaInicio = getDateOfISOWeek(parseInt(week), parseInt(year));
 
             const festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
             const festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
@@ -367,6 +367,7 @@
                     consultaElement.draggable = true;
                     consultaElement.id = `consulta-${consulta.id}`;
                     consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
+                    consultaElement.addEventListener('dragstart', drag);
                     consultaElement.addEventListener('dragstart', drag);
                     consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
                     dayContent.appendChild(consultaElement);
