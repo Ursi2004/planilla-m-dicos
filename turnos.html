@@ -108,8 +108,7 @@
             color: red;
             cursor: pointer;
             margin-left: 5px;
-        }
-    </style>
+        }    </style>
 </head>
 <body>
     <div class="container">
@@ -190,16 +189,14 @@
 
         function actualizarListaTurnos() {
             const turnosList = document.getElementById('turnosList');
-            turnosList.innerHTML = '';
+            turnosList.innerHTML = '<h3>Turnos Disponibles</h3>';
             turnosCreados.forEach((turno) => {
                 const turnoElement = document.createElement('div');
                 turnoElement.className = 'turno';
                 turnoElement.draggable = true;
-                turnoElement.innerHTML = `
-                    ${turno.nombre} (${turno.inicio} - ${turno.fin})
-                    <span class="eliminar-turno" onclick="eliminarTurnoCreado(${turno.id})">❌</span>
-                `;
-                turnoElement.setAttribute('data-turno-id', turno.id);
+                turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                turnoElement.id = `turno-${turno.id}`;
+                turnoElement.setAttribute('data-turno', JSON.stringify(turno));
                 turnoElement.addEventListener('dragstart', drag);
                 turnosList.appendChild(turnoElement);
             });
@@ -212,37 +209,42 @@
         }
 
         function drag(ev) {
-            ev.dataTransfer.setData("text/plain", ev.target.getAttribute('data-turno-id'));
+            ev.dataTransfer.setData("text/plain", ev.target.id);
         }
 
         function allowDrop(ev) {
             ev.preventDefault();
         }
 
-        function drop(ev, fecha) {
+        function drop(ev) {
             ev.preventDefault();
-            const turnoId = ev.dataTransfer.getData("text");
-            const turno = turnosCreados.find(t => t.id.toString() === turnoId);
-            
-            if (turno) {
+            const data = ev.dataTransfer.getData("text/plain");
+            const turnoElement = document.getElementById(data);
+            if (turnoElement) {
+                const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
+                const fecha = ev.target.closest('.dia-content').getAttribute('data-fecha');
                 if (!turnosAsignados[fecha]) {
                     turnosAsignados[fecha] = [];
                 }
-                turnosAsignados[fecha].push({...turno});
+                turnosAsignados[fecha].push(turno);
                 actualizarCalendario();
             }
         }
 
         function eliminarTurnoAsignado(ev) {
             ev.preventDefault();
-            const turnoId = ev.dataTransfer.getData("text");
-            Object.keys(turnosAsignados).forEach(fecha => {
-                turnosAsignados[fecha] = turnosAsignados[fecha].filter(t => t.id.toString() !== turnoId);
-                if (turnosAsignados[fecha].length === 0) {
-                    delete turnosAsignados[fecha];
-                }
-            });
-            actualizarCalendario();
+            const data = ev.dataTransfer.getData("text/plain");
+            const turnoElement = document.getElementById(data);
+            if (turnoElement && turnoElement.classList.contains('turno-asignado')) {
+                const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
+                Object.keys(turnosAsignados).forEach(fecha => {
+                    turnosAsignados[fecha] = turnosAsignados[fecha].filter(t => t.id !== turno.id);
+                    if (turnosAsignados[fecha].length === 0) {
+                        delete turnosAsignados[fecha];
+                    }
+                });
+                actualizarCalendario();
+            }
         }
 
         function mostrarCalendarioSemanal() {
@@ -272,7 +274,7 @@
                 }
                 diaElement.innerHTML = `
                     <div class="dia-header">${dia}<br>${fecha.toLocaleDateString()}</div>
-                    <div class="dia-content" ondrop="drop(event, '${fechaStr}')" ondragover="allowDrop(event)"></div>
+                    <div class="dia-content" data-fecha="${fechaStr}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 `;
                 calendario.appendChild(diaElement);
             });
@@ -298,17 +300,19 @@
         function actualizarCalendario() {
             const dias = document.querySelectorAll('.dia-content');
             dias.forEach((dia) => {
-                const fecha = dia.parentNode.querySelector('.dia-header').textContent.split('\n')[1];
+                const fecha = dia.getAttribute('data-fecha');
                 const turnosDia = turnosAsignados[fecha] || [];
-                let turnosHTML = '';
+                dia.innerHTML = '';
                 turnosDia.forEach((turno) => {
-                    turnosHTML += `
-                        <div class="turno-asignado" draggable="true" ondragstart="drag(event)" data-turno-id="${turno.id}">
-                            ${turno.nombre} (${turno.inicio} - ${turno.fin})
-                        </div>
-                    `;
+                    const turnoElement = document.createElement('div');
+                    turnoElement.className = 'turno-asignado';
+                    turnoElement.draggable = true;
+                    turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                    turnoElement.id = `turno-asignado-${turno.id}`;
+                    turnoElement.setAttribute('data-turno', JSON.stringify(turno));
+                    turnoElement.addEventListener('dragstart', drag);
+                    dia.appendChild(turnoElement);
                 });
-                dia.innerHTML = turnosHTML;
             });
         }
 
