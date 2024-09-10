@@ -113,7 +113,6 @@
     </style>
 </head>
 <body>
-<body>
     <div class="container">
         <h1>Turnos - Calendario Interactivo</h1>
         
@@ -242,10 +241,10 @@
 
         function eliminarTurnoAsignado(ev) {
             ev.preventDefault();
-            const data = JSON.parse(ev.dataTransfer.getData("application/json"));
-            const turnoElement = document.getElementById(data.id);
+            const data = ev.dataTransfer.getData("text/plain");
+            const turnoElement = document.getElementById(data);
             if (turnoElement && turnoElement.classList.contains('turno-asignado')) {
-                const turno = JSON.parse(data.turno);
+                const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
                 Object.keys(turnosAsignados).forEach(fecha => {
                     turnosAsignados[fecha] = turnosAsignados[fecha].filter(t => t.id !== turno.id);
                     if (turnosAsignados[fecha].length === 0) {
@@ -303,6 +302,10 @@
             else
                 ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
             return ISOweekStart;
+        }
+
+        function esFestivo(fecha) {
+            return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
         }
 
         function actualizarCalendario() {
@@ -367,7 +370,6 @@
             var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
             return weekNo;
         }
-
     </script>
 </body>
 </html>
