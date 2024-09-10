@@ -136,11 +136,39 @@
         .holiday {
             background-color: #ffcccb;
         }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Calendario de Consultas</h2>
+        
+        <!-- Formulario para crear consultas -->
+        <div class="form-group">
+            <label for="nombreConsulta">Nombre de la Consulta:</label>
+            <input type="text" id="nombreConsulta" placeholder="Ej: Consulta General">
+        </div>
+        <div class="form-group">
+            <label for="horaInicio">Desde:</label>
+            <select id="horaInicio"></select>
+        </div>
+        <div class="form-group">
+            <label for="horaFin">Hasta:</label>
+            <select id="horaFin"></select>
+        </div>
+        <button class="btn" onclick="crearConsulta()">Crear Consulta</button>
+
         <div class="form-group">
             <label for="semana">Seleccionar Semana:</label>
             <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
@@ -183,6 +211,37 @@
         const subespecialidadSelect = document.getElementById('subespecialidadSelect');
         const medicoSelect = document.getElementById('medicoSelect');
 
+        let consultas = [];
+
+        function generarOpcionesHoras() {
+            const horaInicio = document.getElementById('horaInicio');
+            const horaFin = document.getElementById('horaFin');
+            for (let i = 0; i < 24; i++) {
+                for (let j = 0; j < 60; j += 30) {
+                    const hora = `${i.toString().padStart(2, '0')}:${j.toString().padStart(2, '0')}`;
+                    horaInicio.innerHTML += `<option value="${hora}">${hora}</option>`;
+                    horaFin.innerHTML += `<option value="${hora}">${hora}</option>`;
+                }
+            }
+        }
+
+        function crearConsulta() {
+            const nombre = document.getElementById('nombreConsulta').value;
+            const inicio = document.getElementById('horaInicio').value;
+            const fin = document.getElementById('horaFin').value;
+            
+            if (nombre && inicio && fin) {
+                const consulta = { id: Date.now(), nombre, inicio, fin };
+                consultas.push(consulta);
+                localStorage.setItem('consultas', JSON.stringify(consultas));
+                cargarConsultas();
+                
+                document.getElementById('nombreConsulta').value = '';
+            } else {
+                alert('Por favor, complete todos los campos.');
+            }
+        }
+
         function mostrarCalendarioSemanal() {
             const semanaSeleccionada = semanaInput.value;
             if (!semanaSeleccionada) return;
@@ -192,6 +251,7 @@
             cargarConsultas();
             cargarAsignacionesGuardadas(semanaSeleccionada);
         }
+
         function generarCalendarioSemanal(semana) {
             calendarWeek.innerHTML = '';
             const [year, week] = semana.split('-W');
@@ -237,7 +297,7 @@
         }
 
         function cargarConsultas() {
-            const consultas = JSON.parse(localStorage.getItem('consultas')) || [];
+            consultas = JSON.parse(localStorage.getItem('consultas')) || [];
             consultasDisponibles.innerHTML = '<h3>Consultas Disponibles</h3>';
             consultas.forEach(consulta => {
                 const consultaElement = document.createElement('div');
@@ -437,6 +497,7 @@
         }
 
         window.onload = function() {
+            generarOpcionesHoras();
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             semanaInput.value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
