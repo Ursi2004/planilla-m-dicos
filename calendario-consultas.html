@@ -243,7 +243,7 @@
         function generarCalendarioSemanal(semana) {
             calendarWeek.innerHTML = '';
             const [year, week] = semana.split('-W');
-            const fechaInicio = getDateOfISOWeek(parseInt(week), parseInt(year));
+            const fechaInicio = getDateOfISOWeek(week, year);
 
             const festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
             const festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
@@ -255,7 +255,7 @@
                 const fechaStr = fecha.toISOString().split('T')[0];
                 const dayElement = document.createElement('div');
                 dayElement.className = 'day';
-        
+                
                 let holidayInfo = '';
                 if (festivosNacionales[fechaStr] || festivosMadrid[fechaStr]) {
                     dayElement.classList.add('holiday');
@@ -267,24 +267,20 @@
 
                 dayElement.innerHTML = `
                     <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
-                    <div class="day-content" data-fecha="${fechaStr}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
-                `;
-                calendarWeek.appendChild(dayElement);
-            });
-        }
-
-                dayElement.innerHTML = `
-                    <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
                     <div class="day-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 `;
                 calendarWeek.appendChild(dayElement);
             });
         }
+
         function getDateOfISOWeek(week, year) {
             const simple = new Date(year, 0, 1 + (week - 1) * 7);
             const dayOfWeek = simple.getDay();
-            const ISOweekStart = new Date(simple);
-            ISOweekStart.setDate(simple.getDate() - dayOfWeek + 1);
+            const ISOweekStart = simple;
+            if (dayOfWeek <= 4)
+                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+            else
+                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
             return ISOweekStart;
         }
 
