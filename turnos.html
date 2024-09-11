@@ -208,13 +208,21 @@
                     <span>${turno.nombre} (${turno.inicio} - ${turno.fin})</span>
                     <select class="preferencia" onchange="actualizarPreferencia(${turno.id}, this.value)">
                         <option value="">Preferencia</option>
-                        ${medicos.map(m => `<option value="medico:${m.id}" ${turno.preferencia === `medico:${m.id}` ? 'selected' : ''}>${m.nombre}</option>`).join('')}
-                        ${subespecialidades.map(s => `<option value="sub:${s}" ${turno.preferencia === `sub:${s}` ? 'selected' : ''}>${s}</option>`).join('')}
+                        <optgroup label="Médicos">
+                            ${medicos.map(m => `<option value="medico:${m.id}" ${turno.preferencia === `medico:${m.id}` ? 'selected' : ''}>${m.nombre}</option>`).join('')}
+                        </optgroup>
+                        <optgroup label="Subespecialidades">
+                            ${subespecialidades.map(s => `<option value="sub:${s}" ${turno.preferencia === `sub:${s}` ? 'selected' : ''}>${s}</option>`).join('')}
+                        </optgroup>
                     </select>
                     <select class="solo" onchange="actualizarSolo(${turno.id}, this.value)">
                         <option value="">Solo</option>
-                        ${medicos.map(m => `<option value="medico:${m.id}" ${turno.solo === `medico:${m.id}` ? 'selected' : ''}>${m.nombre}</option>`).join('')}
-                        ${subespecialidades.map(s => `<option value="sub:${s}" ${turno.solo === `sub:${s}` ? 'selected' : ''}>${s}</option>`).join('')}
+                        <optgroup label="Médicos">
+                            ${medicos.map(m => `<option value="medico:${m.id}" ${turno.solo === `medico:${m.id}` ? 'selected' : ''}>${m.nombre}</option>`).join('')}
+                        </optgroup>
+                        <optgroup label="Subespecialidades">
+                            ${subespecialidades.map(s => `<option value="sub:${s}" ${turno.solo === `sub:${s}` ? 'selected' : ''}>${s}</option>`).join('')}
+                        </optgroup>
                     </select>
                     <span class="eliminar-turno" onclick="eliminarTurnoCreado(${turno.id})">❌</span>
                 `;
@@ -367,16 +375,14 @@
                     turnoElement.draggable = true;
 
                     let asignacionInfo = '';
-                    if (turno.solo) {
-                        const [tipo, valor] = turno.solo.split(':');
-                        asignacionInfo = tipo === 'medico' ?
-                            `<br>Médico: ${medicos.find(m => m.id === valor)?.nombre || valor}` :
-                            `<br>Subespecialidad: ${valor}`;
-                    } else if (turno.preferencia) {
-                        const [tipo, valor] = turno.preferencia.split(':');
-                        asignacionInfo = tipo === 'medico' ?
-                            `<br>Preferencia: ${medicos.find(m => m.id === valor)?.nombre || valor}` :
-                            `<br>Preferencia: ${valor}`;
+                    if (turno.asignacion) {
+                        const [tipo, valor] = turno.asignacion.split(':');
+                        if (tipo === 'medico') {
+                            const medico = medicos.find(m => m.id === valor);
+                            asignacionInfo = medico ? `<br>Médico: ${medico.nombre}` : `<br>Médico: ${valor}`;
+                        } else {
+                            asignacionInfo = `<br>Subespecialidad: ${valor}`;
+                        }
                     }
 
                     turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})${asignacionInfo}`;
