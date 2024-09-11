@@ -268,16 +268,15 @@
                         turnosAsignados[fecha] = [];
                     }
                     
-                    // Aplicar preferencia o restricción "solo"
+                    let asignacion = '';
                     if (turno.solo) {
-                        turno.medicoAsignado = turno.solo.startsWith('medico:') ? turno.solo.split(':')[1] : '';
-                        turno.subespecialidadAsignada = turno.solo.startsWith('sub:') ? turno.solo.split(':')[1] : '';
+                        asignacion = turno.solo;
                     } else if (turno.preferencia) {
-                        turno.medicoAsignado = turno.preferencia.startsWith('medico:') ? turno.preferencia.split(':')[1] : '';
-                        turno.subespecialidadAsignada = turno.preferencia.startsWith('sub:') ? turno.preferencia.split(':')[1] : '';
+                        asignacion = turno.preferencia;
                     }
-                    
-                    turnosAsignados[fecha].push({...turno});
+
+                    const turnoAsignado = {...turno, asignacion};
+                    turnosAsignados[fecha].push(turnoAsignado);
                     actualizarCalendario();
                 }
             }
@@ -362,9 +361,14 @@
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'turno-asignado';
                     turnoElement.draggable = true;
-                    turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})
-                        ${turno.medicoAsignado ? `<br>Médico: ${turno.medicoAsignado}` : ''}
-                        ${turno.subespecialidadAsignada ? `<br>Subespecialidad: ${turno.subespecialidadAsignada}` : ''}`;
+                    let asignacionInfo = '';
+                    if (turno.asignacion) {
+                        const [tipo, valor] = turno.asignacion.split(':');
+                        asignacionInfo = tipo === 'medico' ? 
+                            `<br>Médico: ${medicos.find(m => m.id === valor)?.nombre || valor}` :
+                            `<br>Subespecialidad: ${valor}`;
+                    }
+                    turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})${asignacionInfo}`;
                     turnoElement.id = `turno-asignado-${turno.id}`;
                     turnoElement.setAttribute('data-turno', JSON.stringify(turno));
                     turnoElement.addEventListener('dragstart', drag);
