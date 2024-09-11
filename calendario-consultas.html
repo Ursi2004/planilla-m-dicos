@@ -155,8 +155,31 @@
     <script>
         let turnosCreados = [];
         let turnosAsignados = {};
-        let festivosNacionales = {};
-        let festivosMadrid = {};
+        let festivosNacionales = {
+            "2024-01-01": "Año Nuevo",
+            "2024-01-06": "Epifanía del Señor",
+            "2024-03-29": "Viernes Santo",
+            "2024-05-01": "Fiesta del Trabajo",
+            "2024-08-15": "Asunción de la Virgen",
+            "2024-10-12": "Fiesta Nacional de España",
+            "2024-11-01": "Todos los Santos",
+            "2024-12-06": "Día de la Constitución Española",
+            "2024-12-25": "Navidad"
+        };
+        let festivosMadrid = {
+            "2024-01-01": "Año Nuevo",
+            "2024-01-06": "Epifanía del Señor",
+            "2024-03-28": "Jueves Santo",
+            "2024-03-29": "Viernes Santo",
+            "2024-05-01": "Fiesta del Trabajo",
+            "2024-05-02": "Fiesta de la Comunidad de Madrid",
+            "2024-05-15": "San Isidro",
+            "2024-08-15": "Asunción de la Virgen",
+            "2024-10-12": "Fiesta Nacional de España",
+            "2024-11-01": "Todos los Santos",
+            "2024-12-06": "Día de la Constitución Española",
+            "2024-12-25": "Navidad"
+        };
         let festivosManuales = {};
 
         function generarOpcionesHoras() {
@@ -326,12 +349,6 @@
             });
         }
 
-        function cargarFestivos() {
-            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
-            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
-            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
-        }
-
         function guardarTurnosAsignados() {
             const semanaSeleccionada = document.getElementById('semana').value;
             localStorage.setItem(`turnosAsignados_${semanaSeleccionada}`, JSON.stringify(turnosAsignados));
@@ -349,43 +366,15 @@
         }
 
         function getWeekNumber(d) {
-            // Si d no es un objeto Date, intenta convertirlo
-            if (!(d instanceof Date)) {
-                d = new Date(d);
-            }
-
-            // Verifica si la conversión fue exitosa
-            if (isNaN(d.getTime())) {
-                throw new Error("Fecha inválida");
-            }
-
-            // Ajusta la fecha al jueves de esa semana (jueves es el día 4)
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            var dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-
-            // Obtén el primer día del año
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
             var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-
-            // Calcula el número de semana
-            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-
-            // Maneja el caso especial de la semana 53
-            if (weekNo > 52) {
-                var nextYearStart = new Date(Date.UTC(d.getUTCFullYear() + 1, 0, 1));
-                if (d < nextYearStart) {
-                    return weekNo;
-                } else {
-                    return 1;
-                }
-            }
-
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
             return weekNo;
         }
 
         window.onload = function() {
             generarOpcionesHoras();
-            cargarFestivos();
             const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
             if (turnosCreadosGuardados) {
                 turnosCreados = JSON.parse(turnosCreadosGuardados);
