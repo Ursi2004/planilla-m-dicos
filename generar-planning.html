@@ -120,7 +120,9 @@
             const semanaSeleccionada = document.getElementById('semana').value;
             if (!semanaSeleccionada) return;
 
+            cargarDatos();
             generarCalendario(semanaSeleccionada);
+            actualizarCalendario();
         }
 
         function getDateOfISOWeek(week, year) {
@@ -171,13 +173,11 @@
             festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
             festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
             subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            calendarioMedicos = {};
             
             medicos.forEach(medico => {
                 calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
             });
 
-            // Cargar turnos y consultas asignados
             const semanaSeleccionada = document.getElementById('semana').value;
             turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
             consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaSeleccionada}`)) || {};
@@ -213,16 +213,24 @@
             const medicosDisponibles = obtenerMedicosDisponibles(fecha);
             
             // Asignar consultas
-            (consultasAsignadas[fecha] || []).forEach(consulta => {
-                if (!consulta.medico) {
+            consultasCreadas.forEach(consulta => {
+                if (consulta.fecha === fecha && !consulta.medico) {
                     consulta.medico = asignarMedicoAConsulta(consulta, medicosDisponibles);
+                    if (consulta.medico) {
+                        if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
+                        consultasAsignadas[fecha].push(consulta);
+                    }
                 }
             });
 
             // Asignar turnos
-            (turnosAsignados[fecha] || []).forEach(turno => {
-                if (!turno.medico) {
+            turnosCreados.forEach(turno => {
+                if (turno.fecha === fecha && !turno.medico) {
                     turno.medico = asignarMedicoATurno(turno, medicosDisponibles);
+                    if (turno.medico) {
+                        if (!turnosAsignados[fecha]) turnosAsignados[fecha] = [];
+                        turnosAsignados[fecha].push(turno);
+                    }
                 }
             });
         }
@@ -397,7 +405,6 @@
         }
 
         window.onload = function() {
-            cargarDatos();
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
