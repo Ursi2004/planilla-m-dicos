@@ -177,8 +177,25 @@
             });
 
             const semanaSeleccionada = document.getElementById('semana').value;
-            consultasCreadas = JSON.parse(localStorage.getItem(`consultas_${semanaSeleccionada}`)) || [];
-            turnosCreados = JSON.parse(localStorage.getItem(`turnosCreados_${semanaSeleccionada}`)) || [];
+            consultasCreadas = JSON.parse(localStorage.getItem(`consultas`)) || [];
+            turnosCreados = JSON.parse(localStorage.getItem(`turnosCreados`)) || [];
+            
+            // Filtrar consultas y turnos para la semana seleccionada
+            const [year, week] = semanaSeleccionada.split('-W');
+            const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
+            const ultimoDia = new Date(primerDia);
+            ultimoDia.setDate(ultimoDia.getDate() + 6);
+
+            consultasCreadas = consultasCreadas.filter(consulta => {
+                const fechaConsulta = new Date(consulta.fecha);
+                return fechaConsulta >= primerDia && fechaConsulta <= ultimoDia;
+            });
+
+            turnosCreados = turnosCreados.filter(turno => {
+                const fechaTurno = new Date(turno.fecha);
+                return fechaTurno >= primerDia && fechaTurno <= ultimoDia;
+            });
+
             consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaSeleccionada}`)) || {};
             turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
         }
@@ -192,12 +209,12 @@
 
             cargarDatos();
 
-            const [year, week] = semanaSeleccionada.split('-W');
-            const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
-
             // Reiniciar asignaciones
             consultasAsignadas = {};
             turnosAsignados = {};
+
+            const [year, week] = semanaSeleccionada.split('-W');
+            const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
 
             for (let i = 0; i < 7; i++) {
                 const fecha = new Date(primerDia);
