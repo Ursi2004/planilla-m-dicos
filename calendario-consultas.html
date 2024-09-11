@@ -77,7 +77,9 @@
             padding: 5px;
             margin: 5px;
             cursor: move;
-            display: inline-block;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .consultas-disponibles {
             margin-top: 20px;
@@ -135,6 +137,14 @@
         }
         .holiday {
             background-color: #ffcccb;
+        }
+        .eliminar-consulta {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 2px 5px;
+            cursor: pointer;
+            margin-left: 5px;
         }
     </style>
 </head>
@@ -293,11 +303,20 @@
                 consultaElement.className = 'consulta';
                 consultaElement.draggable = true;
                 consultaElement.id = `consulta-${consulta.id}`;
-                consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin})`;
+                consultaElement.innerHTML = `
+                    <span>${consulta.nombre} (${consulta.inicio} - ${consulta.fin})</span>
+                    <button class="eliminar-consulta" onclick="eliminarConsultaCreada(${consulta.id})">Eliminar</button>
+                `;
                 consultaElement.addEventListener('dragstart', drag);
                 consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
                 consultasDisponibles.appendChild(consultaElement);
             });
+        }
+
+        function eliminarConsultaCreada(id) {
+            consultas = consultas.filter(c => c.id !== id);
+            localStorage.setItem('consultas', JSON.stringify(consultas));
+            cargarConsultas();
         }
 
         function allowDrop(ev) {
