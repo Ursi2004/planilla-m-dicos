@@ -165,7 +165,6 @@
         let festivosNacionales = {};
         let festivosMadrid = {};
         let festivosManuales = {};
-        let medicos = [];
         let subespecialidades = [];
 
         function generarOpcionesHoras() {
@@ -208,12 +207,7 @@
                     <span>${turno.nombre} (${turno.inicio} - ${turno.fin})</span>
                     <select class="solo" onchange="actualizarSolo(${turno.id}, this.value)">
                         <option value="">Solo</option>
-                        <optgroup label="Médicos">
-                            ${medicos.map(m => `<option value="medico:${m.id}" ${turno.solo === `medico:${m.id}` ? 'selected' : ''}>${m.nombre}</option>`).join('')}
-                        </optgroup>
-                        <optgroup label="Subespecialidades">
-                            ${subespecialidades.map(s => `<option value="sub:${s}" ${turno.solo === `sub:${s}` ? 'selected' : ''}>${s}</option>`).join('')}
-                        </optgroup>
+                        ${subespecialidades.map(s => `<option value="${s}" ${turno.solo === s ? 'selected' : ''}>${s}</option>`).join('')}
                     </select>
                     <span class="eliminar-turno" onclick="eliminarTurnoCreado(${turno.id})">❌</span>
                 `;
@@ -347,16 +341,7 @@
                     turnoElement.className = 'turno-asignado';
                     turnoElement.draggable = true;
 
-                    let asignacionInfo = '';
-                    if (turno.solo) {
-                        const [tipo, valor] = turno.solo.split(':');
-                        if (tipo === 'medico') {
-                            const medico = medicos.find(m => m.id.toString() === valor);
-                            asignacionInfo = medico ? `<br>Médico: ${medico.nombre}` : `<br>Médico: ${valor}`;
-                        } else {
-                            asignacionInfo = `<br>Subespecialidad: ${valor}`;
-                        }
-                    }
+                    let asignacionInfo = turno.solo ? `<br>Subespecialidad: ${turno.solo}` : '';
 
                     turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})${asignacionInfo}`;
                     turnoElement.id = `turno-asignado-${turno.asignacionId}`;
@@ -433,15 +418,14 @@
             return weekNo;
         }
 
-        function cargarMedicosYSubespecialidades() {
-            medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+        function cargarSubespecialidades() {
             subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
         }
 
         window.onload = function() {
             generarOpcionesHoras();
             cargarFestivos();
-            cargarMedicosYSubespecialidades();
+            cargarSubespecialidades();
             const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
             if (turnosCreadosGuardados) {
                 turnosCreados = JSON.parse(turnosCreadosGuardados);
