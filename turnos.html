@@ -229,7 +229,9 @@
             const turno = turnosCreados.find(t => t.id === turnoId);
             if (turno) {
                 turno.preferencia = valor;
+                turno.solo = ''; // Limpiar la opción "solo" si se selecciona una preferencia
                 localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+                actualizarListaTurnos();
             }
         }
 
@@ -237,7 +239,9 @@
             const turno = turnosCreados.find(t => t.id === turnoId);
             if (turno) {
                 turno.solo = valor;
+                turno.preferencia = ''; // Limpiar la preferencia si se selecciona "solo"
                 localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+                actualizarListaTurnos();
             }
         }
 
@@ -361,13 +365,20 @@
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'turno-asignado';
                     turnoElement.draggable = true;
+
                     let asignacionInfo = '';
-                    if (turno.asignacion) {
-                        const [tipo, valor] = turno.asignacion.split(':');
-                        asignacionInfo = tipo === 'medico' ? 
+                    if (turno.solo) {
+                        const [tipo, valor] = turno.solo.split(':');
+                        asignacionInfo = tipo === 'medico' ?
                             `<br>Médico: ${medicos.find(m => m.id === valor)?.nombre || valor}` :
                             `<br>Subespecialidad: ${valor}`;
+                    } else if (turno.preferencia) {
+                        const [tipo, valor] = turno.preferencia.split(':');
+                        asignacionInfo = tipo === 'medico' ?
+                            `<br>Preferencia: ${medicos.find(m => m.id === valor)?.nombre || valor}` :
+                            `<br>Preferencia: ${valor}`;
                     }
+
                     turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})${asignacionInfo}`;
                     turnoElement.id = `turno-asignado-${turno.id}`;
                     turnoElement.setAttribute('data-turno', JSON.stringify(turno));
