@@ -340,11 +340,12 @@
             }
 
             const asignaciones = {};
-            document.querySelectorAll('.day').forEach((day, index) => {
-                const consultas = Array.from(day.querySelectorAll('.consulta')).map(consulta => {
+            document.querySelectorAll('.day-content').forEach((dayContent, index) => {
+                const fecha = dayContent.getAttribute('data-fecha');
+                const consultas = Array.from(dayContent.querySelectorAll('.consulta')).map(consulta => {
                     return JSON.parse(consulta.getAttribute('data-consulta'));
                 });
-                asignaciones[diasSemana[index]] = consultas;
+                asignaciones[fecha] = consultas;
             });
 
             localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignaciones));
@@ -394,9 +395,9 @@
         }
 
         function cargarAsignacionesEnCalendario(asignaciones) {
-            document.querySelectorAll('.day-content').forEach((dayContent, index) => {
-                const diaSemana = diasSemana[index];
-                const consultasDelDia = asignaciones[diaSemana] || [];
+            document.querySelectorAll('.day-content').forEach((dayContent) => {
+                const fecha = dayContent.getAttribute('data-fecha');
+                const consultasDelDia = asignaciones[fecha] || [];
                 
                 dayContent.innerHTML = ''; // Limpiar el contenido existente
                 
