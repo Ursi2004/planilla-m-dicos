@@ -139,9 +139,6 @@
     </style>
 </head>
 <body>
-    <!-- ... (mantener el HTML existente) ... -->
-
-    <script>
     <div class="container">
         <h2>Calendario de Consultas</h2>
         
@@ -203,6 +200,7 @@
         const medicoSelect = document.getElementById('medicoSelect');
 
         let consultas = [];
+        let asignacionesSemana = {};
 
         function generarOpcionesHoras() {
             const horaInicio = document.getElementById('horaInicio');
@@ -276,6 +274,65 @@
             });
         }
 
+        function getDateOfISOWeek(week, year) {
+            const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+            const dayOfWeek = simple.getUTCDay();
+            const ISOweekStart = new Date(simple);
+            if (dayOfWeek <= 4)
+                ISOweekStart.setUTCDate(simple.getUTCDate() - dayOfWeek + 1);
+            else
+                ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - dayOfWeek);
+            return ISOweekStart;
+        }
+
+        function cargarConsultas() {
+            consultas = JSON.parse(localStorage.getItem('consultas')) || [];
+            consultasDisponibles.innerHTML = '<h3>Consultas Disponibles</h3>';
+            consultas.forEach(consulta => {
+                const consultaElement = document.createElement('div');
+                consultaElement.className = 'consulta';
+                consultaElement.draggable = true;
+                consultaElement.id = `consulta-${consulta.id}`;
+                consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin})`;
+                consultaElement.addEventListener('dragstart', drag);
+                consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
+                consultasDisponibles.appendChild(consultaElement);
+            });
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text/plain", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text/plain");
+            const consultaElement = document.getElementById(data);
+            if (consultaElement) {
+                const dayElement = ev.target.closest('.day');
+                if (dayElement.classList.contains('holiday')) {
+                    alert("No se pueden asignar consultas en días festivos.");
+                    return;
+                }
+                consultaActual = JSON.parse(consultaElement.getAttribute('data-consulta'));
+                diaSeleccionado = ev.target.closest('.day-content');
+                mostrarModalSubespecialidad();
+            }
+        }
+
+        function eliminarConsulta(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text/plain");
+            const consultaElement = document.getElementById(data);
+            if (consultaElement) {
+                consultaElement.remove();
+            }
+        }
+
         function guardarAsignaciones() {
             const semanaSeleccionada = semanaInput.value;
             if (!semanaSeleccionada) {
@@ -283,21 +340,22 @@
                 return;
             }
 
-            const asignaciones = {};
+            asignacionesSemana = {};
             document.querySelectorAll('.day-content').forEach((dayContent) => {
                 const fecha = dayContent.getAttribute('data-fecha');
                 const consultas = Array.from(dayContent.querySelectorAll('.consulta')).map(consulta => {
                     return JSON.parse(consulta.getAttribute('data-consulta'));
                 });
-                asignaciones[fecha] = consultas;
+                asignacionesSemana[fecha] = consultas;
             });
 
-            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignaciones));
+            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignacionesSemana));
             alert("Asignaciones guardadas correctamente.");
         }
 
         function cargarAsignacionesGuardadas(semana) {
             const asignacionesGuardadas = JSON.parse(localStorage.getItem(`asignaciones_${semana}`)) || {};
+            asignacionesSemana = asignacionesGuardadas;
             
             document.querySelectorAll('.day-content').forEach((dayContent) => {
                 const fecha = dayContent.getAttribute('data-fecha');
@@ -328,7 +386,7 @@
             const [year, week] = semanaSeleccionada.split('-W');
             const semanaPreviaNum = parseInt(week) - 1;
             const semanaPreviaYear = semanaPreviaNum > 0 ? year : parseInt(year) - 1;
-            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52;
+            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52; // Asumiendo que el año anterior tiene 52 semanas
             const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
 
             const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrevia}`)) || {};
@@ -356,6 +414,7 @@
                     dayContent.appendChild(consultaElement);
                 });
             });
+            asignacionesSemana = asignaciones;
         }
 
         function mostrarModalSubespecialidad() {
@@ -424,6 +483,13 @@
             newConsulta.addEventListener('dragstart', drag);
             newConsulta.setAttribute('data-consulta', JSON.stringify(consultaActual));
             diaSeleccionado.appendChild(newConsulta);
+
+            const fecha = diaSeleccionado.getAttribute('data-fecha');
+            if (!asignacionesSemana[fecha]) {
+                asignacionesSemana[fecha] = [];
+            }
+            asignacionesSemana[fecha].push(consultaActual);
+
             modal.style.display = "none";
         }
 
@@ -455,4 +521,3 @@
     </script>
 </body>
 </html>
-
