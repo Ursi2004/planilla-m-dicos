@@ -7,9 +7,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
             margin: 0;
             padding: 20px;
+            background-color: #f0f0f0;
         }
         .container {
             max-width: 1000px;
@@ -21,7 +21,6 @@
         }
         h1 {
             text-align: center;
-            color: #333;
         }
         .form-group {
             margin-bottom: 15px;
@@ -262,6 +261,17 @@
             cargarTurnosAsignados(semanaSeleccionada);
         }
 
+        function getDateOfISOWeek(week, year) {
+            const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+            const dayOfWeek = simple.getUTCDay();
+            const ISOweekStart = new Date(simple);
+            if (dayOfWeek <= 4)
+                ISOweekStart.setUTCDate(simple.getUTCDate() - dayOfWeek + 1);
+            else
+                ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - dayOfWeek);
+            return ISOweekStart;
+        }
+
         function generarCalendario(semana) {
             const calendario = document.getElementById('calendario');
             calendario.innerHTML = '';
@@ -271,42 +281,25 @@
             
             diasSemana.forEach((dia, index) => {
                 const fecha = new Date(primerDia);
-                fecha.setDate(fecha.getDate() + index);
+                fecha.setUTCDate(fecha.getUTCDate() + index);
                 const fechaStr = fecha.toISOString().split('T')[0];
-                const dayElement = document.createElement('div');
-                dayElement.className = 'dia';
                 
-                let holidayInfo = '';
-                if (festivosNacionales[fechaStr] || festivosMadrid[fechaStr]) {
-                    dayElement.classList.add('festivo');
-                    holidayInfo = '<br><small>Festivo</small>';
-                } else if (festivosManuales[fechaStr]) {
-                    dayElement.classList.add('festivo');
-                    holidayInfo = '<br><small>Festivo añadido</small>';
+                const diaElement = document.createElement('div');
+                diaElement.className = 'dia';
+                if (esFestivo(fechaStr)) {
+                    diaElement.classList.add('festivo');
                 }
-
-                dayElement.innerHTML = `
-                    <div class="dia-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
+                diaElement.innerHTML = `
+                    <div class="dia-header">${dia}<br>${fecha.toLocaleDateString()}</div>
                     <div class="dia-content" data-fecha="${fechaStr}"></div>
                 `;
-                const diaContent = dayElement.querySelector('.dia-content');
+                const diaContent = diaElement.querySelector('.dia-content');
                 diaContent.addEventListener('drop', drop);
                 diaContent.addEventListener('dragover', allowDrop);
-                calendario.appendChild(dayElement);
+                calendario.appendChild(diaElement);
             });
             
             actualizarCalendario();
-        }
-
-        function getDateOfISOWeek(week, year) {
-            const simple = new Date(year, 0, 1 + (week - 1) * 7);
-            const dayOfWeek = simple.getDay();
-            const ISOweekStart = new Date(simple);
-            if (dayOfWeek <= 4)
-                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-            else
-                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-            return ISOweekStart;
         }
 
         function esFestivo(fecha) {
