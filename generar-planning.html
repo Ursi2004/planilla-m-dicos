@@ -176,14 +176,14 @@
                 calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
             });
 
-            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
-            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
-            
             const semanaSeleccionada = document.getElementById('semana').value;
             const [year, week] = semanaSeleccionada.split('-W');
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
             const ultimoDia = new Date(primerDia);
             ultimoDia.setDate(ultimoDia.getDate() + 6);
+
+            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
+            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
 
             consultasCreadas = consultasCreadas.filter(consulta => {
                 const fechaConsulta = new Date(consulta.fecha);
@@ -230,7 +230,7 @@
         }
 
         function asignarConsultasYTurnos(fecha) {
-            const medicosDisponibles = obtenerMedicosDisponibles(fecha);
+            let medicosDisponibles = obtenerMedicosDisponibles(fecha);
             
             // Asignar consultas
             consultasCreadas.forEach(consulta => {
@@ -239,6 +239,7 @@
                     if (medicoAsignado) {
                         if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
                         consultasAsignadas[fecha].push({...consulta, medico: medicoAsignado});
+                        medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
                     }
                 }
             });
@@ -250,6 +251,7 @@
                     if (medicoAsignado) {
                         if (!turnosAsignados[fecha]) turnosAsignados[fecha] = [];
                         turnosAsignados[fecha].push({...turno, medico: medicoAsignado});
+                        medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
                     }
                 }
             });
@@ -262,44 +264,28 @@
             });
         }
 
+        function puedeSerAsignado(medico, fecha, asignacion) {
+            return !haTrabajoNochePrevia(medico.correo, fecha) &&
+                   !haTrabajoMuchoReciente(medico.correo, fecha) &&
+                   !excedeFinesDeSemana(medico.correo, fecha) &&
+                   !estaMedicoAsignadoEnFecha(medico.correo, fecha) &&
+                   (!asignacion.subespecialidad || subespecialidadesMedicos[medico.correo].includes(asignacion.subespecialidad));
+        }
+
         function asignarMedicoAConsulta(consulta, medicosDisponibles, fecha) {
-            let medicosAptos = medicosDisponibles;
-            
-            if (consulta.subespecialidad) {
-                medicosAptos = medicosDisponibles.filter(medico => 
-                    subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad)
-                );
-            }
-
-            medicosAptos = medicosAptos.filter(medico => 
-                puedeSerAsignado(medico.correo, fecha, consulta)
-            );
-
+            const medicosAptos = medicosDisponibles.filter(medico => puedeSerAsignado(medico, fecha, consulta));
             if (medicosAptos.length > 0) {
                 return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
             }
-
             return null;
         }
 
         function asignarMedicoATurno(turno, medicosDisponibles, fecha) {
-            const medicosAptos = medicosDisponibles.filter(medico => 
-                puedeSerAsignado(medico.correo, fecha, turno)
-            );
-
+            const medicosAptos = medicosDisponibles.filter(medico => puedeSerAsignado(medico, fecha, turno));
             if (medicosAptos.length > 0) {
                 return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
             }
-
             return null;
-        }
-
-        function puedeSerAsignado(correoMedico, fecha, asignacion) {
-            return !haTrabajoNochePrevia(correoMedico, fecha) &&
-                   !haTrabajoMuchoReciente(correoMedico, fecha) &&
-                   !excedeFinesDeSemana(correoMedico, fecha) &&
-                   !estaMedicoAsignadoEnFecha(correoMedico, fecha) &&
-                   (!asignacion.subespecialidad || subespecialidadesMedicos[correoMedico].includes(asignacion.subespecialidad));
         }
 
         function haTrabajoNochePrevia(correoMedico, fecha) {
@@ -400,7 +386,7 @@
 
             const asignacionAModificar = asignacionesDelDia[0];
             
-            if (!puedeSerAsignado(nuevoMedico, fecha, asignacionAModificar)) {
+            if (!puedeSerAsignado({correo: nuevoMedico}, fecha, asignacionAModificar)) {
                 alert("Este médico no puede ser asignado debido a las restricciones existentes.");
                 return;
             }
