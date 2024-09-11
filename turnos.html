@@ -9,92 +9,95 @@
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 20px;
         }
         .container {
-            margin-top: 20px;
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
             background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        h2 {
+        h1 {
             text-align: center;
+            color: #333;
         }
         .form-group {
             margin-bottom: 15px;
-            display: flex;
-            align-items: center;
         }
-        .form-group label {
+        label {
             display: block;
             margin-bottom: 5px;
-            margin-right: 10px;
         }
-        .form-group input,
-        .form-group select {
-            flex: 1;
-            padding: 10px;
-            box-sizing: border-box;
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
-        .btn {
-            padding: 10px;
+        button {
             background-color: #4CAF50;
             color: white;
+            padding: 10px 15px;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
-            margin-top: 10px;
         }
-        .btn:hover {
+        button:hover {
             background-color: #45a049;
         }
-        .calendar-week {
+        #turnosList {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            min-height: 50px;
+        }
+        .turno {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 5px;
+            margin: 5px 0;
+            cursor: move;
+        }
+        #calendario {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 5px;
             margin-top: 20px;
         }
-        .day {
+        .dia {
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 5px;
             min-height: 100px;
         }
-        .day-header {
+        .dia-header {
             font-weight: bold;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
-        .day-content {
+        .dia-content {
             min-height: 50px;
         }
-        .turno {
-            background-color: #4CAF50;
-            color: white;
-            padding: 5px;
-            margin: 5px;
+        .turno-asignado {
+            background-color: #e6f3ff;
+            padding: 2px 5px;
+            margin: 2px 0;
+            font-size: 0.9em;
             cursor: move;
-            display: inline-block;
-        }
-        .turnos-disponibles {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
         }
         .papelera {
             width: 100%;
             height: 50px;
-            background-color: #ff6b6b;
-            color: white;
+            background-color: #ffcccc;
+            border: 2px dashed #ff0000;
             text-align: center;
             line-height: 50px;
             margin-top: 20px;
         }
         nav {
             margin-top: 20px;
+            text-align: center;
         }
         nav a {
             margin: 0 10px;
@@ -104,11 +107,17 @@
         .festivo {
             background-color: #ffcccb;
         }
+        .eliminar-turno {
+            color: red;
+            cursor: pointer;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Turnos - Calendario Interactivo</h2>
+        <h1>Turnos - Calendario Interactivo</h1>
+        
         <div class="form-group">
             <label for="nombreTurno">Nombre del Turno:</label>
             <input type="text" id="nombreTurno" placeholder="Ej: Turno Mañana">
@@ -121,21 +130,23 @@
             <label for="horaFin">Hasta:</label>
             <select id="horaFin"></select>
         </div>
-        <button class="btn" onclick="crearTurno()">Crear Turno</button>
+        <button onclick="crearTurno()">Crear Turno</button>
+        
         <div class="form-group">
             <label for="semana">Seleccionar Semana:</label>
             <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
         </div>
-        <div id="calendarioSemanal" style="display: none;">
-            <div class="calendar-week" id="calendarWeek"></div>
-            <div class="turnos-disponibles" id="turnosDisponibles">
-                <h3>Turnos Disponibles</h3>
-            </div>
-            <div class="papelera" ondrop="eliminarTurnoAsignado(event)" ondragover="allowDrop(event)">
-                Arrastre aquí para eliminar turno asignado
-            </div>
+        
+        <div id="turnosList"></div>
+        
+        <div id="calendario"></div>
+
+        <div class="papelera" ondrop="eliminarTurnoAsignado(event)" ondragover="allowDrop(event)">
+            Arrastre aquí para eliminar turno asignado
         </div>
-        <button class="btn" onclick="guardarTurnosAsignados()">Guardar Asignaciones</button>
+
+        <button onclick="guardarTurnosAsignados()">Guardar Asignaciones</button>
+
         <nav>
             <a href="index.html">Volver al Inicio</a>
         </nav>
@@ -169,7 +180,7 @@
                 const turno = { id: Date.now(), nombre, inicio, fin };
                 turnosCreados.push(turno);
                 localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
-                actualizarTurnosDisponibles();
+                actualizarListaTurnos();
                 
                 document.getElementById('nombreTurno').value = '';
             } else {
@@ -177,9 +188,9 @@
             }
         }
 
-        function actualizarTurnosDisponibles() {
-            const turnosDisponibles = document.getElementById('turnosDisponibles');
-            turnosDisponibles.innerHTML = '<h3>Turnos Disponibles</h3>';
+        function actualizarListaTurnos() {
+            const turnosList = document.getElementById('turnosList');
+            turnosList.innerHTML = '<h3>Turnos Disponibles</h3>';
             turnosCreados.forEach((turno) => {
                 const turnoElement = document.createElement('div');
                 turnoElement.className = 'turno';
@@ -191,14 +202,14 @@
                 turnoElement.id = `turno-${turno.id}`;
                 turnoElement.setAttribute('data-turno', JSON.stringify(turno));
                 turnoElement.addEventListener('dragstart', drag);
-                turnosDisponibles.appendChild(turnoElement);
+                turnosList.appendChild(turnoElement);
             });
         }
 
         function eliminarTurnoCreado(id) {
             turnosCreados = turnosCreados.filter(t => t.id !== id);
             localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
-            actualizarTurnosDisponibles();
+            actualizarListaTurnos();
         }
 
         function drag(ev) {
@@ -215,7 +226,7 @@
             const turnoElement = document.getElementById(data);
             if (turnoElement) {
                 const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
-                const diaContent = ev.target.closest('.day-content');
+                const diaContent = ev.target.closest('.dia-content');
                 if (diaContent) {
                     const fecha = diaContent.getAttribute('data-fecha');
                     if (!turnosAsignados[fecha]) {
@@ -247,15 +258,13 @@
             const semanaSeleccionada = document.getElementById('semana').value;
             if (!semanaSeleccionada) return;
 
-            document.getElementById('calendarioSemanal').style.display = 'block';
             generarCalendario(semanaSeleccionada);
-            actualizarTurnosDisponibles();
             cargarTurnosAsignados(semanaSeleccionada);
         }
 
         function generarCalendario(semana) {
-            const calendarWeek = document.getElementById('calendarWeek');
-            calendarWeek.innerHTML = '';
+            const calendario = document.getElementById('calendario');
+            calendario.innerHTML = '';
             const [year, week] = semana.split('-W');
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
             const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -264,20 +273,26 @@
                 const fecha = new Date(primerDia);
                 fecha.setDate(fecha.getDate() + index);
                 const fechaStr = fecha.toISOString().split('T')[0];
+                const dayElement = document.createElement('div');
+                dayElement.className = 'dia';
                 
-                const diaElement = document.createElement('div');
-                diaElement.className = 'day';
-                if (esFestivo(fechaStr)) {
-                    diaElement.classList.add('festivo');
+                let holidayInfo = '';
+                if (festivosNacionales[fechaStr] || festivosMadrid[fechaStr]) {
+                    dayElement.classList.add('festivo');
+                    holidayInfo = '<br><small>Festivo</small>';
+                } else if (festivosManuales[fechaStr]) {
+                    dayElement.classList.add('festivo');
+                    holidayInfo = '<br><small>Festivo añadido</small>';
                 }
-                diaElement.innerHTML = `
-                    <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}</div>
-                    <div class="day-content" data-fecha="${fechaStr}"></div>
+
+                dayElement.innerHTML = `
+                    <div class="dia-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
+                    <div class="dia-content" data-fecha="${fechaStr}"></div>
                 `;
-                const diaContent = diaElement.querySelector('.day-content');
+                const diaContent = dayElement.querySelector('.dia-content');
                 diaContent.addEventListener('drop', drop);
                 diaContent.addEventListener('dragover', allowDrop);
-                calendarWeek.appendChild(diaElement);
+                calendario.appendChild(dayElement);
             });
             
             actualizarCalendario();
@@ -299,14 +314,14 @@
         }
 
         function actualizarCalendario() {
-            const dias = document.querySelectorAll('.day-content');
+            const dias = document.querySelectorAll('.dia-content');
             dias.forEach((dia) => {
                 const fecha = dia.getAttribute('data-fecha');
                 const turnosDia = turnosAsignados[fecha] || [];
                 dia.innerHTML = '';
                 turnosDia.forEach((turno) => {
                     const turnoElement = document.createElement('div');
-                    turnoElement.className = 'turno turno-asignado';
+                    turnoElement.className = 'turno-asignado';
                     turnoElement.draggable = true;
                     turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
                     turnoElement.id = `turno-asignado-${turno.id}`;
@@ -339,20 +354,6 @@
             }
         }
 
-        window.onload = function() {
-            generarOpcionesHoras();
-            cargarFestivos();
-            const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
-            if (turnosCreadosGuardados) {
-                turnosCreados = JSON.parse(turnosCreadosGuardados);
-                actualizarTurnosDisponibles();
-            }
-            const currentDate = new Date();
-            const currentWeek = getWeekNumber(currentDate);
-            document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
-            mostrarCalendarioSemanal();
-        };
-
         function getWeekNumber(d) {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
             d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
@@ -360,6 +361,20 @@
             var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
             return weekNo;
         }
+
+        window.onload = function() {
+            generarOpcionesHoras();
+            cargarFestivos();
+            const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
+            if (turnosCreadosGuardados) {
+                turnosCreados = JSON.parse(turnosCreadosGuardados);
+                actualizarListaTurnos();
+            }
+            const currentDate = new Date();
+            const currentWeek = getWeekNumber(currentDate);
+            document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
+            mostrarCalendarioSemanal();
+        };
     </script>
 </body>
 </html>
