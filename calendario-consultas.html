@@ -348,6 +348,41 @@
             }
         }
 
+        function getWeekNumber(d) {
+            // Si d no es un objeto Date, intenta convertirlo
+            if (!(d instanceof Date)) {
+                d = new Date(d);
+            }
+
+            // Verifica si la conversión fue exitosa
+            if (isNaN(d.getTime())) {
+                throw new Error("Fecha inválida");
+            }
+
+            // Ajusta la fecha al jueves de esa semana (jueves es el día 4)
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            var dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+
+            // Obtén el primer día del año
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+
+            // Calcula el número de semana
+            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+
+            // Maneja el caso especial de la semana 53
+            if (weekNo > 52) {
+                var nextYearStart = new Date(Date.UTC(d.getUTCFullYear() + 1, 0, 1));
+                if (d < nextYearStart) {
+                    return weekNo;
+                } else {
+                    return 1;
+                }
+            }
+
+            return weekNo;
+        }
+
         window.onload = function() {
             generarOpcionesHoras();
             cargarFestivos();
@@ -361,14 +396,6 @@
             document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
             mostrarCalendarioSemanal();
         };
-
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-            return weekNo;
-        }
     </script>
 </body>
 </html>
