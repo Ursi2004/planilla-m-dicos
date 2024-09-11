@@ -176,6 +176,11 @@
             medicos.forEach(medico => {
                 calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
             });
+
+            // Cargar turnos y consultas asignados
+            const semanaSeleccionada = document.getElementById('semana').value;
+            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
+            consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaSeleccionada}`)) || {};
         }
 
         function generarPlanning() {
@@ -190,43 +195,34 @@
             const [year, week] = semanaSeleccionada.split('-W');
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
 
-            // Reiniciar asignaciones
-            turnosAsignados = {};
-            consultasAsignadas = {};
-
             for (let i = 0; i < 7; i++) {
                 const fecha = new Date(primerDia);
                 fecha.setUTCDate(fecha.getUTCDate() + i);
                 const fechaStr = fecha.toISOString().split('T')[0];
 
                 if (!esFestivo(fechaStr)) {
-                    asignarTurnosYConsultas(fechaStr);
+                    asignarConsultasYTurnos(fechaStr);
                 }
             }
 
             actualizarCalendario();
+            guardarAsignaciones(semanaSeleccionada);
         }
 
-        function asignarTurnosYConsultas(fecha) {
+        function asignarConsultasYTurnos(fecha) {
             const medicosDisponibles = obtenerMedicosDisponibles(fecha);
             
             // Asignar consultas
-            consultasCreadas.forEach(consulta => {
-                const medicoAsignado = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
-                if (medicoAsignado) {
-                    if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
-                    consultasAsignadas[fecha].push({...consulta, medico: medicoAsignado});
-                    medicosDisponibles.splice(medicosDisponibles.indexOf(medicoAsignado), 1);
+            (consultasAsignadas[fecha] || []).forEach(consulta => {
+                if (!consulta.medico) {
+                    consulta.medico = asignarMedicoAConsulta(consulta, medicosDisponibles);
                 }
             });
 
             // Asignar turnos
-            turnosCreados.forEach(turno => {
-                const medicoAsignado = asignarMedicoATurno(turno, medicosDisponibles, fecha);
-                if (medicoAsignado) {
-                    if (!turnosAsignados[fecha]) turnosAsignados[fecha] = [];
-                    turnosAsignados[fecha].push({...turno, medico: medicoAsignado});
-                    medicosDisponibles.splice(medicosDisponibles.indexOf(medicoAsignado), 1);
+            (turnosAsignados[fecha] || []).forEach(turno => {
+                if (!turno.medico) {
+                    turno.medico = asignarMedicoATurno(turno, medicosDisponibles);
                 }
             });
         }
@@ -238,11 +234,18 @@
             });
         }
 
-        function asignarMedicoAConsulta(consulta, medicosDisponibles, fecha) {
-            const medicosAptos = medicosDisponibles.filter(medico => 
-                subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad) &&
-                !haTrabajoNochePrevia(medico.correo, fecha) &&
-                !haTrabajoMuchoReciente(medico.correo, fecha)
+        function asignarMedicoAConsulta(consulta, medicosDisponibles) {
+            let medicosAptos = medicosDisponibles;
+            
+            if (consulta.subespecialidad) {
+                medicosAptos = medicosDisponibles.filter(medico => 
+                    subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad)
+                );
+            }
+
+            medicosAptos = medicosAptos.filter(medico => 
+                !haTrabajoNochePrevia(medico.correo, consulta.fecha) &&
+                !haTrabajoMuchoReciente(medico.correo, consulta.fecha)
             );
 
             if (medicosAptos.length > 0) {
@@ -252,11 +255,11 @@
             return null;
         }
 
-        function asignarMedicoATurno(turno, medicosDisponibles, fecha) {
+        function asignarMedicoATurno(turno, medicosDisponibles) {
             const medicosAptos = medicosDisponibles.filter(medico => 
-                !haTrabajoNochePrevia(medico.correo, fecha) &&
-                !haTrabajoMuchoReciente(medico.correo, fecha) &&
-                !excedeFinesDeSemana(medico.correo, fecha)
+                !haTrabajoNochePrevia(medico.correo, turno.fecha) &&
+                !haTrabajoMuchoReciente(medico.correo, turno.fecha) &&
+                !excedeFinesDeSemana(medico.correo, turno.fecha)
             );
 
             if (medicosAptos.length > 0) {
@@ -322,7 +325,7 @@
                 consultasDia.forEach(consulta => {
                     const consultaElement = document.createElement('div');
                     consultaElement.className = 'asignacion';
-                    consultaElement.textContent = `Consulta: ${consulta.nombre} - ${consulta.medico}`;
+                    consultaElement.textContent = `Consulta: ${consulta.nombre} - ${consulta.medico || 'Sin asignar'}`;
                     dia.appendChild(consultaElement);
                 });
 
@@ -331,7 +334,7 @@
                 turnosDia.forEach(turno => {
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'asignacion';
-                    turnoElement.textContent = `Turno: ${turno.nombre} - ${turno.medico}`;
+                    turnoElement.textContent = `Turno: ${turno.nombre} - ${turno.medico || 'Sin asignar'}`;
                     dia.appendChild(turnoElement);
                 });
 
@@ -375,26 +378,26 @@
             // Actualizar las asignaciones
             if (asignacionAModificar.nombre.includes('Consulta')) {
                 consultasAsignadas[fecha] = consultasAsignadas[fecha].map(c => 
-                    c.asignacionId === asignacionAModificar.asignacionId ? asignacionAModificar : c
+                    c.id === asignacionAModificar.id ? asignacionAModificar : c
                 );
             } else {
                 turnosAsignados[fecha] = turnosAsignados[fecha].map(t => 
-                    t.asignacionId === asignacionAModificar.asignacionId ? asignacionAModificar : t
+                    t.id === asignacionAModificar.id ? asignacionAModificar : t
                 );
             }
 
             actualizarCalendario();
+            guardarAsignaciones(document.getElementById('semana').value);
         }
 
-        function cargarMedicosYSubespecialidades() {
-            medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
-            subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+        function guardarAsignaciones(semana) {
+            localStorage.setItem(`turnosAsignados_${semana}`, JSON.stringify(turnosAsignados));
+            localStorage.setItem(`consultasAsignadas_${semana}`, JSON.stringify(consultasAsignadas));
+            alert("Asignaciones guardadas correctamente.");
         }
 
         window.onload = function() {
             cargarDatos();
-            cargarMedicosYSubespecialidades();
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
