@@ -7,9 +7,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 20px;
-            background-color: #f0f0f0;
         }
         .container {
             max-width: 1000px;
@@ -21,6 +21,7 @@
         }
         h1 {
             text-align: center;
+            color: #333;
         }
         .form-group {
             margin-bottom: 15px;
@@ -134,6 +135,7 @@
         <div class="form-group">
             <label for="semana">Seleccionar Semana:</label>
             <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
+            <button onclick="copiarSemanaPreviaAsignaciones()">Copiar Semana Previa</button>
         </div>
         
         <div id="turnosList"></div>
@@ -345,6 +347,27 @@
             } else {
                 turnosAsignados = {};
             }
+        }
+
+        function copiarSemanaPreviaAsignaciones() {
+            const semanaSeleccionada = document.getElementById('semana').value;
+            if (!semanaSeleccionada) {
+                alert("Por favor, selecciona una semana antes de copiar.");
+                return;
+            }
+
+            const [year, week] = semanaSeleccionada.split('-W');
+            const semanaPreviaNum = parseInt(week) - 1;
+            const semanaPreviaYear = semanaPreviaNum > 0 ? year : parseInt(year) - 1;
+            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52; // Asumiendo que el año anterior tiene 52 semanas
+            const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
+
+            const asignacionesPrevias = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaPrevia}`)) || {};
+            
+            turnosAsignados = {...asignacionesPrevias};
+            actualizarCalendario();
+            
+            alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
         }
 
         function getWeekNumber(d) {
