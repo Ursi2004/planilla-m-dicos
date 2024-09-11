@@ -59,6 +59,9 @@
             padding: 5px;
             margin: 5px 0;
             cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         #calendario {
             display: grid;
@@ -112,6 +115,9 @@
             cursor: pointer;
             margin-left: 5px;
         }
+        .preferencia, .solo {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -159,6 +165,8 @@
         let festivosNacionales = {};
         let festivosMadrid = {};
         let festivosManuales = {};
+        let medicos = [];
+        let subespecialidades = [];
 
         function generarOpcionesHoras() {
             const horaInicio = document.getElementById('horaInicio');
@@ -178,7 +186,7 @@
             const fin = document.getElementById('horaFin').value;
             
             if (nombre && inicio && fin) {
-                const turno = { id: Date.now(), nombre, inicio, fin };
+                const turno = { id: Date.now(), nombre, inicio, fin, preferencia: '', solo: '' };
                 turnosCreados.push(turno);
                 localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
                 actualizarListaTurnos();
@@ -197,7 +205,17 @@
                 turnoElement.className = 'turno';
                 turnoElement.draggable = true;
                 turnoElement.innerHTML = `
-                    ${turno.nombre} (${turno.inicio} - ${turno.fin})
+                    <span>${turno.nombre} (${turno.inicio} - ${turno.fin})</span>
+                    <select class="preferencia" onchange="actualizarPreferencia(${turno.id}, this.value)">
+                        <option value="">Preferencia</option>
+                        ${medicos.map(m => `<option value="medico:${m.id}">${m.nombre}</option>`).join('')}
+                        ${subespecialidades.map(s => `<option value="sub:${s}">${s}</option>`).join('')}
+                    </select>
+                    <select class="solo" onchange="actualizarSolo(${turno.id}, this.value)">
+                        <option value="">Solo</option>
+                        ${medicos.map(m => `<option value="medico:${m.id}">${m.nombre}</option>`).join('')}
+                        ${subespecialidades.map(s => `<option value="sub:${s}">${s}</option>`).join('')}
+                    </select>
                     <span class="eliminar-turno" onclick="eliminarTurnoCreado(${turno.id})">❌</span>
                 `;
                 turnoElement.id = `turno-${turno.id}`;
@@ -205,6 +223,22 @@
                 turnoElement.addEventListener('dragstart', drag);
                 turnosList.appendChild(turnoElement);
             });
+        }
+
+        function actualizarPreferencia(turnoId, valor) {
+            const turno = turnosCreados.find(t => t.id === turnoId);
+            if (turno) {
+                turno.preferencia = valor;
+                localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+            }
+        }
+
+        function actualizarSolo(turnoId, valor) {
+            const turno = turnosCreados.find(t => t.id === turnoId);
+            if (turno) {
+                turno.solo = valor;
+                localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+            }
         }
 
         function eliminarTurnoCreado(id) {
@@ -233,6 +267,16 @@
                     if (!turnosAsignados[fecha]) {
                         turnosAsignados[fecha] = [];
                     }
+                    
+                    // Aplicar preferencia o restricción "solo"
+                    if (turno.solo) {
+                        turno.medicoAsignado = turno.solo.startsWith('medico:') ? turno.solo.split(':')[1] : '';
+                        turno.subespecialidadAsignada = turno.solo.startsWith('sub:') ? turno.solo.split(':')[1] : '';
+                    } else if (turno.preferencia) {
+                        turno.medicoAsignado = turno.preferencia.startsWith('medico:') ? turno.preferencia.split(':')[1] : '';
+                        turno.subespecialidadAsignada = turno.preferencia.startsWith('sub:') ? turno.preferencia.split(':')[1] : '';
+                    }
+                    
                     turnosAsignados[fecha].push({...turno});
                     actualizarCalendario();
                 }
@@ -318,7 +362,9 @@
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'turno-asignado';
                     turnoElement.draggable = true;
-                    turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})`;
+                    turnoElement.innerHTML = `${turno.nombre} (${turno.inicio} - ${turno.fin})
+                        ${turno.medicoAsignado ? `<br>Médico: ${turno.medicoAsignado}` : ''}
+                        ${turno.subespecialidadAsignada ? `<br>Subespecialidad: ${turno.subespecialidadAsignada}` : ''}`;
                     turnoElement.id = `turno-asignado-${turno.id}`;
                     turnoElement.setAttribute('data-turno', JSON.stringify(turno));
                     turnoElement.addEventListener('dragstart', drag);
@@ -390,9 +436,15 @@
             return weekNo;
         }
 
+        function cargarMedicosYSubespecialidades() {
+            medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
+        }
+
         window.onload = function() {
             generarOpcionesHoras();
             cargarFestivos();
+            cargarMedicosYSubespecialidades();
             const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
             if (turnosCreadosGuardados) {
                 turnosCreados = JSON.parse(turnosCreadosGuardados);
