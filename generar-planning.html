@@ -179,8 +179,8 @@
             const semanaSeleccionada = document.getElementById('semana').value;
             consultasCreadas = JSON.parse(localStorage.getItem(`consultas_${semanaSeleccionada}`)) || [];
             turnosCreados = JSON.parse(localStorage.getItem(`turnosCreados_${semanaSeleccionada}`)) || [];
-            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
             consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaSeleccionada}`)) || {};
+            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
         }
 
         function generarPlanning() {
@@ -196,8 +196,8 @@
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
 
             // Reiniciar asignaciones
-            turnosAsignados = {};
             consultasAsignadas = {};
+            turnosAsignados = {};
 
             for (let i = 0; i < 7; i++) {
                 const fecha = new Date(primerDia);
@@ -219,10 +219,10 @@
             // Asignar consultas
             consultasCreadas.forEach(consulta => {
                 if (consulta.fecha === fecha && !consulta.medico) {
-                    consulta.medico = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
-                    if (consulta.medico) {
+                    const medicoAsignado = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
+                    if (medicoAsignado) {
                         if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
-                        consultasAsignadas[fecha].push(consulta);
+                        consultasAsignadas[fecha].push({...consulta, medico: medicoAsignado});
                     }
                 }
             });
@@ -230,10 +230,10 @@
             // Asignar turnos
             turnosCreados.forEach(turno => {
                 if (turno.fecha === fecha && !turno.medico) {
-                    turno.medico = asignarMedicoATurno(turno, medicosDisponibles, fecha);
-                    if (turno.medico) {
+                    const medicoAsignado = asignarMedicoATurno(turno, medicosDisponibles, fecha);
+                    if (medicoAsignado) {
                         if (!turnosAsignados[fecha]) turnosAsignados[fecha] = [];
-                        turnosAsignados[fecha].push(turno);
+                        turnosAsignados[fecha].push({...turno, medico: medicoAsignado});
                     }
                 }
             });
@@ -403,8 +403,8 @@
         }
 
         function guardarAsignaciones(semana) {
-            localStorage.setItem(`turnosAsignados_${semana}`, JSON.stringify(turnosAsignados));
             localStorage.setItem(`consultasAsignadas_${semana}`, JSON.stringify(consultasAsignadas));
+            localStorage.setItem(`turnosAsignados_${semana}`, JSON.stringify(turnosAsignados));
             alert("Asignaciones guardadas correctamente.");
         }
 
