@@ -241,12 +241,12 @@
         function asignarMedicoAConsulta(consulta, medicosDisponibles, fecha) {
             const medicosAptos = medicosDisponibles.filter(medico => 
                 subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad) &&
-                !haTrabajoNochePrevia(medico, fecha) &&
-                !haTrabajoMuchoReciente(medico, fecha)
+                !haTrabajoNochePrevia(medico.correo, fecha) &&
+                !haTrabajoMuchoReciente(medico.correo, fecha)
             );
 
             if (medicosAptos.length > 0) {
-                return medicosAptos[Math.floor(Math.random() * medicosAptos.length)];
+                return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
             }
 
             return null;
@@ -254,43 +254,43 @@
 
         function asignarMedicoATurno(turno, medicosDisponibles, fecha) {
             const medicosAptos = medicosDisponibles.filter(medico => 
-                !haTrabajoNochePrevia(medico, fecha) &&
-                !haTrabajoMuchoReciente(medico, fecha) &&
-                !excedeFinesDeSemana(medico, fecha)
+                !haTrabajoNochePrevia(medico.correo, fecha) &&
+                !haTrabajoMuchoReciente(medico.correo, fecha) &&
+                !excedeFinesDeSemana(medico.correo, fecha)
             );
 
             if (medicosAptos.length > 0) {
-                return medicosAptos[Math.floor(Math.random() * medicosAptos.length)];
+                return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
             }
 
             return null;
         }
 
-        function haTrabajoNochePrevia(medico, fecha) {
+        function haTrabajoNochePrevia(correoMedico, fecha) {
             const fechaPrevia = new Date(fecha);
             fechaPrevia.setDate(fechaPrevia.getDate() - 1);
             const fechaPreviaStr = fechaPrevia.toISOString().split('T')[0];
 
             const turnosPrevios = turnosAsignados[fechaPreviaStr] || [];
             return turnosPrevios.some(turno => 
-                turno.medico === medico.correo &&
+                turno.medico === correoMedico &&
                 (turno.inicio >= '00:00' && turno.fin <= '07:00')
             );
         }
 
-        function haTrabajoMuchoReciente(medico, fecha) {
+        function haTrabajoMuchoReciente(correoMedico, fecha) {
             const fechaPrevia = new Date(fecha);
             fechaPrevia.setDate(fechaPrevia.getDate() - 1);
             const fechaPreviaStr = fechaPrevia.toISOString().split('T')[0];
 
             const turnosPrevios = turnosAsignados[fechaPreviaStr] || [];
             return turnosPrevios.some(turno => 
-                turno.medico === medico.correo &&
+                turno.medico === correoMedico &&
                 turno.fin === '24:00'
             );
         }
 
-        function excedeFinesDeSemana(medico, fecha) {
+        function excedeFinesDeSemana(correoMedico, fecha) {
             const dia = new Date(fecha).getDay();
             if (dia !== 0 && dia !== 6) return false;
 
@@ -302,7 +302,7 @@
                 if (fechaAsignadaObj.getMonth() === mesActual) {
                     const diaAsignado = fechaAsignadaObj.getDay();
                     if ((diaAsignado === 0 || diaAsignado === 6) && 
-                        turnosAsignados[fechaAsignada].some(turno => turno.medico === medico.correo)) {
+                        turnosAsignados[fechaAsignada].some(turno => turno.medico === correoMedico)) {
                         finesDeSemanaTrabajados++;
                     }
                 }
@@ -394,6 +394,7 @@
 
         window.onload = function() {
             cargarDatos();
+            cargarMedicosYSubespecialidades();
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
