@@ -391,7 +391,20 @@
 
             const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrevia}`)) || {};
             
-            cargarAsignacionesEnCalendario(asignacionesPrevias);
+            const fechaInicioSemanaActual = getDateOfISOWeek(parseInt(week), parseInt(year));
+            const fechaInicioSemanaPrevia = getDateOfISOWeek(semanaPreviaWeek, semanaPreviaYear);
+            
+            const nuevasAsignaciones = {};
+            Object.keys(asignacionesPrevias).forEach(fechaPrevia => {
+                const diferenciaEnDias = (new Date(fechaPrevia) - fechaInicioSemanaPrevia) / (1000 * 60 * 60 * 24);
+                const nuevaFecha = new Date(fechaInicioSemanaActual);
+                nuevaFecha.setDate(nuevaFecha.getDate() + diferenciaEnDias);
+                const nuevaFechaStr = nuevaFecha.toISOString().split('T')[0];
+                nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia];
+            });
+
+            asignacionesSemana = nuevasAsignaciones;
+            cargarAsignacionesEnCalendario(nuevasAsignaciones);
             
             alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
         }
@@ -414,7 +427,6 @@
                     dayContent.appendChild(consultaElement);
                 });
             });
-            asignacionesSemana = asignaciones;
         }
 
         function mostrarModalSubespecialidad() {
