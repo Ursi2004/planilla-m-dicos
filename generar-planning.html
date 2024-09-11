@@ -167,8 +167,6 @@
 
         function cargarDatos() {
             medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
-            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
             festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
             festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
             festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
@@ -179,6 +177,8 @@
             });
 
             const semanaSeleccionada = document.getElementById('semana').value;
+            consultasCreadas = JSON.parse(localStorage.getItem(`consultas_${semanaSeleccionada}`)) || [];
+            turnosCreados = JSON.parse(localStorage.getItem(`turnosCreados_${semanaSeleccionada}`)) || [];
             turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
             consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaSeleccionada}`)) || {};
         }
@@ -194,6 +194,10 @@
 
             const [year, week] = semanaSeleccionada.split('-W');
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
+
+            // Reiniciar asignaciones
+            turnosAsignados = {};
+            consultasAsignadas = {};
 
             for (let i = 0; i < 7; i++) {
                 const fecha = new Date(primerDia);
@@ -215,7 +219,7 @@
             // Asignar consultas
             consultasCreadas.forEach(consulta => {
                 if (consulta.fecha === fecha && !consulta.medico) {
-                    consulta.medico = asignarMedicoAConsulta(consulta, medicosDisponibles);
+                    consulta.medico = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
                     if (consulta.medico) {
                         if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
                         consultasAsignadas[fecha].push(consulta);
@@ -226,7 +230,7 @@
             // Asignar turnos
             turnosCreados.forEach(turno => {
                 if (turno.fecha === fecha && !turno.medico) {
-                    turno.medico = asignarMedicoATurno(turno, medicosDisponibles);
+                    turno.medico = asignarMedicoATurno(turno, medicosDisponibles, fecha);
                     if (turno.medico) {
                         if (!turnosAsignados[fecha]) turnosAsignados[fecha] = [];
                         turnosAsignados[fecha].push(turno);
@@ -242,7 +246,7 @@
             });
         }
 
-        function asignarMedicoAConsulta(consulta, medicosDisponibles) {
+        function asignarMedicoAConsulta(consulta, medicosDisponibles, fecha) {
             let medicosAptos = medicosDisponibles;
             
             if (consulta.subespecialidad) {
@@ -252,8 +256,8 @@
             }
 
             medicosAptos = medicosAptos.filter(medico => 
-                !haTrabajoNochePrevia(medico.correo, consulta.fecha) &&
-                !haTrabajoMuchoReciente(medico.correo, consulta.fecha)
+                !haTrabajoNochePrevia(medico.correo, fecha) &&
+                !haTrabajoMuchoReciente(medico.correo, fecha)
             );
 
             if (medicosAptos.length > 0) {
@@ -263,11 +267,11 @@
             return null;
         }
 
-        function asignarMedicoATurno(turno, medicosDisponibles) {
+        function asignarMedicoATurno(turno, medicosDisponibles, fecha) {
             const medicosAptos = medicosDisponibles.filter(medico => 
-                !haTrabajoNochePrevia(medico.correo, turno.fecha) &&
-                !haTrabajoMuchoReciente(medico.correo, turno.fecha) &&
-                !excedeFinesDeSemana(medico.correo, turno.fecha)
+                !haTrabajoNochePrevia(medico.correo, fecha) &&
+                !haTrabajoMuchoReciente(medico.correo, fecha) &&
+                !excedeFinesDeSemana(medico.correo, fecha)
             );
 
             if (medicosAptos.length > 0) {
