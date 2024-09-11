@@ -11,40 +11,50 @@
             margin: 0;
             padding: 0;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
+            min-height: 100vh;
         }
         .container {
-            margin-top: 20px;
             max-width: 800px;
             width: 100%;
-            padding: 20px;
+            padding: 30px;
             background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
         h2 {
             text-align: center;
+            color: #333;
+            margin-bottom: 30px;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
         }
         .form-group input, .form-group select {
             width: 100%;
             padding: 10px;
             box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
         }
         .btn {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background-color: #4CAF50;
             color: white;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
-            margin-top: 10px;
+            font-size: 16px;
+            transition: background-color 0.3s;
         }
         .btn:hover {
             background-color: #45a049;
@@ -60,6 +70,7 @@
             text-align: center;
             border: 1px solid #ddd;
             cursor: pointer;
+            border-radius: 4px;
         }
         .calendario .header {
             background-color: #4CAF50;
@@ -81,51 +92,69 @@
         .calendario .festivo-manual {
             background-color: #add8e6;
         }
-        .calendario .selected-red.festivo-nacional-madrid, .calendario .selected-yellow.festivo-nacional-madrid {
+        .calendario .selected-red.festivo-nacional-madrid, 
+        .calendario .selected-yellow.festivo-nacional-madrid {
             background-image: linear-gradient(to bottom right, #ffcccc 50%, #ffa07a 50%);
         }
-        .calendario .selected-red.festivo-manual, .calendario .selected-yellow.festivo-manual {
+        .calendario .selected-red.festivo-manual, 
+        .calendario .selected-yellow.festivo-manual {
             background-image: linear-gradient(to bottom right, #ffcccc 50%, #add8e6 50%);
         }
         .medico-list {
             margin-top: 20px;
         }
         .medico-item {
-            padding: 10px;
+            padding: 15px;
             background-color: #f9f9f9;
             border: 1px solid #ddd;
             margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            border-radius: 4px;
         }
         .delete-btn {
-            background-color: red;
+            background-color: #ff4d4d;
             color: white;
             border: none;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .delete-btn:hover {
+            background-color: #ff3333;
         }
         nav {
-            margin-top: 20px;
+            margin-top: 30px;
+            text-align: center;
         }
         nav a {
             margin: 0 10px;
             text-decoration: none;
             color: #4CAF50;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        nav a:hover {
+            color: #45a049;
         }
         .legend {
             margin-top: 20px;
             display: flex;
             justify-content: space-around;
+            flex-wrap: wrap;
         }
         .legend-item {
             display: flex;
             align-items: center;
+            margin: 5px;
         }
         .legend-color {
             width: 20px;
             height: 20px;
             margin-right: 5px;
+            border-radius: 50%;
         }
     </style>
 </head>
@@ -388,14 +417,34 @@
             localStorage.setItem(`calendario_${correoMedico}`, JSON.stringify(calendarioSeleccion));
             alert("Cambios guardados correctamente.");
         }
-    </script>
 
-    <nav>
-        <a href="festivos.html">Calendario de Festivos</a>
-        <a href="subespecialidades.html">Subespecialidades</a>
-        <a href="calendario-consultas.html">Calendario de Consultas</a>
-        <a href="turnos.html">Calendario de Turnos</a>
-        <a href="generar-planning.html">Generar Planning</a>
-    </nav>
+        function cargarMedicosYSubespecialidades() {
+            medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
+        }
+
+        window.onload = function() {
+            generarOpcionesHoras();
+            cargarFestivos();
+            cargarMedicosYSubespecialidades();
+            const turnosCreadosGuardados = localStorage.getItem('turnosCreados');
+            if (turnosCreadosGuardados) {
+                turnosCreados = JSON.parse(turnosCreadosGuardados);
+                actualizarListaTurnos();
+            }
+            const currentDate = new Date();
+            const currentWeek = getWeekNumber(currentDate);
+            document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
+            mostrarCalendarioSemanal();
+        };
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+            return weekNo;
+        }
+    </script>
 </body>
 </html>
