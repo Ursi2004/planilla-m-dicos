@@ -200,7 +200,7 @@
         const medicoSelect = document.getElementById('medicoSelect');
 
         let consultas = [];
-        let asignacionesSemana = {};
+        let consultasAsignadas = {};
 
         function generarOpcionesHoras() {
             const horaInicio = document.getElementById('horaInicio');
@@ -268,7 +268,7 @@
 
                 dayElement.innerHTML = `
                     <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
-                    <div class="day-content" data-fecha="${fechaStr}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                    <div class="day-content" ondrop="drop(event)" ondragover="allowDrop(event)" data-fecha="${fechaStr}"></div>
                 `;
                 calendarWeek.appendChild(dayElement);
             });
@@ -328,8 +328,14 @@
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text/plain");
             const consultaElement = document.getElementById(data);
-            if (consultaElement) {
-                consultaElement.remove();
+            if (consultaElement && consultaElement.classList.contains('consulta-asignada')) {
+                const consulta = JSON.parse(consultaElement.getAttribute('data-consulta'));
+                const fecha = consultaElement.closest('.day-content').getAttribute('data-fecha');
+                consultasAsignadas[fecha] = consultasAsignadas[fecha].filter(c => c.asignacionId !== consulta.asignacionId);
+                if (consultasAsignadas[fecha].length === 0) {
+                    delete consultasAsignadas[fecha];
+                }
+                actualizarCalendario();
             }
         }
 
@@ -340,40 +346,14 @@
                 return;
             }
 
-            asignacionesSemana = {};
-            document.querySelectorAll('.day-content').forEach((dayContent) => {
-                const fecha = dayContent.getAttribute('data-fecha');
-                const consultas = Array.from(dayContent.querySelectorAll('.consulta')).map(consulta => {
-                    return JSON.parse(consulta.getAttribute('data-consulta'));
-                });
-                asignacionesSemana[fecha] = consultas;
-            });
-
-            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(asignacionesSemana));
+            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(consultasAsignadas));
             alert("Asignaciones guardadas correctamente.");
         }
 
         function cargarAsignacionesGuardadas(semana) {
             const asignacionesGuardadas = JSON.parse(localStorage.getItem(`asignaciones_${semana}`)) || {};
-            asignacionesSemana = asignacionesGuardadas;
-            
-            document.querySelectorAll('.day-content').forEach((dayContent) => {
-                const fecha = dayContent.getAttribute('data-fecha');
-                const consultasDelDia = asignacionesGuardadas[fecha] || [];
-                
-                dayContent.innerHTML = ''; // Limpiar el contenido existente
-                
-                consultasDelDia.forEach(consulta => {
-                    const consultaElement = document.createElement('div');
-                    consultaElement.className = 'consulta';
-                    consultaElement.draggable = true;
-                    consultaElement.id = `consulta-${consulta.id}`;
-                    consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
-                    consultaElement.addEventListener('dragstart', drag);
-                    consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
-                    dayContent.appendChild(consultaElement);
-                });
-            });
+            consultasAsignadas = asignacionesGuardadas;
+            actualizarCalendario();
         }
 
         function copiarSemanaPreviaAsignaciones() {
@@ -386,7 +366,7 @@
             const [year, week] = semanaSeleccionada.split('-W');
             const semanaPreviaNum = parseInt(week) - 1;
             const semanaPreviaYear = semanaPreviaNum > 0 ? year : parseInt(year) - 1;
-            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52; // Asumiendo que el año anterior tiene 52 semanas
+            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52;
             const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
 
             const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrevia}`)) || {};
@@ -400,31 +380,35 @@
                 const nuevaFecha = new Date(fechaInicioSemanaActual);
                 nuevaFecha.setDate(nuevaFecha.getDate() + diferenciaEnDias);
                 const nuevaFechaStr = nuevaFecha.toISOString().split('T')[0];
-                nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia];
+                nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia].map(consulta => ({
+                    ...consulta,
+                    asignacionId: Date.now() + Math.random()
+                }));
             });
 
-            asignacionesSemana = nuevasAsignaciones;
-            cargarAsignacionesEnCalendario(nuevasAsignaciones);
+            consultasAsignadas = nuevasAsignaciones;
+            actualizarCalendario();
             
             alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
         }
 
-        function cargarAsignacionesEnCalendario(asignaciones) {
-            document.querySelectorAll('.day-content').forEach((dayContent) => {
-                const fecha = dayContent.getAttribute('data-fecha');
-                const consultasDelDia = asignaciones[fecha] || [];
-                
-                dayContent.innerHTML = ''; // Limpiar el contenido existente
-                
-                consultasDelDia.forEach(consulta => {
+        function actualizarCalendario() {
+            const dias = document.querySelectorAll('.day-content');
+            dias.forEach((dia) => {
+                const fecha = dia.getAttribute('data-fecha');
+                const consultasDia = consultasAsignadas[fecha] || [];
+                dia.innerHTML = '';
+                consultasDia.forEach((consulta) => {
                     const consultaElement = document.createElement('div');
-                    consultaElement.className = 'consulta';
+                    consultaElement.className = 'consulta consulta-asignada';
                     consultaElement.draggable = true;
-                    consultaElement.id = `consulta-${consulta.id}`;
-                    consultaElement.textContent = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin}) - ${consulta.subespecialidad} - ${consulta.medico}`;
-                    consultaElement.addEventListener('dragstart', drag);
+                    consultaElement.innerHTML = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin})<br>
+                        ${consulta.subespecialidad ? `Subespecialidad: ${consulta.subespecialidad}<br>` : ''}
+                        ${consulta.medico ? `Médico: ${consulta.medico}` : ''}`;
+                    consultaElement.id = `consulta-asignada-${consulta.asignacionId}`;
                     consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
-                    dayContent.appendChild(consultaElement);
+                    consultaElement.addEventListener('dragstart', drag);
+                    dia.appendChild(consultaElement);
                 });
             });
         }
@@ -484,24 +468,20 @@
                 medicoAsignado = medicoSelect.options[medicoSelect.selectedIndex].textContent;
             }
 
-            consultaActual.subespecialidad = subespecialidadSeleccionada;
-            consultaActual.medico = medicoAsignado;
-
-            const newConsulta = document.createElement('div');
-            newConsulta.className = 'consulta';
-            newConsulta.draggable = true;
-            newConsulta.id = `consulta-${consultaActual.id}`;
-            newConsulta.textContent = `${consultaActual.nombre} (${consultaActual.inicio} - ${consultaActual.fin}) - ${subespecialidadSeleccionada} - ${medicoAsignado}`;
-            newConsulta.addEventListener('dragstart', drag);
-            newConsulta.setAttribute('data-consulta', JSON.stringify(consultaActual));
-            diaSeleccionado.appendChild(newConsulta);
+            const consultaAsignada = {
+                ...consultaActual,
+                subespecialidad: subespecialidadSeleccionada,
+                medico: medicoAsignado,
+                asignacionId: Date.now()
+            };
 
             const fecha = diaSeleccionado.getAttribute('data-fecha');
-            if (!asignacionesSemana[fecha]) {
-                asignacionesSemana[fecha] = [];
+            if (!consultasAsignadas[fecha]) {
+                consultasAsignadas[fecha] = [];
             }
-            asignacionesSemana[fecha].push(consultaActual);
+            consultasAsignadas[fecha].push(consultaAsignada);
 
+            actualizarCalendario();
             modal.style.display = "none";
         }
 
