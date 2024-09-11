@@ -378,7 +378,7 @@
                     if (turno.asignacion) {
                         const [tipo, valor] = turno.asignacion.split(':');
                         if (tipo === 'medico') {
-                            const medico = medicos.find(m => m.id === valor);
+                            const medico = medicos.find(m => m.id.toString() === valor);
                             asignacionInfo = medico ? `<br>Médico: ${medico.nombre}` : `<br>Médico: ${valor}`;
                         } else {
                             asignacionInfo = `<br>Subespecialidad: ${valor}`;
