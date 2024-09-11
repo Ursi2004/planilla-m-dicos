@@ -118,6 +118,20 @@
         .preferencia, .solo {
             margin-left: 10px;
         }
+        .medico-btn, .subespecialidad-btn {
+            margin: 2px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .medico-btn.selected, .subespecialidad-btn.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .preferencia-container, .solo-container {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -143,7 +157,7 @@
             <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
             <button onclick="copiarSemanaPreviaAsignaciones()">Copiar Semana Previa</button>
         </div>
-        
+                
         <div id="turnosList"></div>
         
         <div id="calendario"></div>
@@ -194,6 +208,90 @@
                 document.getElementById('nombreTurno').value = '';
             } else {
                 alert('Por favor, complete todos los campos.');
+            }
+        }
+
+        function actualizarListaTurnos() {
+            const turnosList = document.getElementById('turnosList');
+            turnosList.innerHTML = '<h3>Turnos Disponibles</h3>';
+            turnosCreados.forEach((turno) => {
+                const turnoElement = document.createElement('div');
+                turnoElement.className = 'turno';
+                turnoElement.draggable = true;
+                turnoElement.innerHTML = `
+                    <span>${turno.nombre} (${turno.inicio} - ${turno.fin})</span>
+                    <div class="preferencia-container">
+                        <strong>Preferencia:</strong>
+                        <div class="medicos-preferencia">
+                            ${medicos.map(m => `<button class="medico-btn" onclick="togglePreferencia('medico', ${turno.id}, ${m.id})">${m.nombre}</button>`).join('')}
+                        </div>
+                        <div class="subespecialidades-preferencia">
+                            ${subespecialidades.map(s => `<button class="subespecialidad-btn" onclick="togglePreferencia('sub', ${turno.id}, '${s}')">${s}</button>`).join('')}
+                        </div>
+                    </div>
+                    <div class="solo-container">
+                        <strong>Solo:</strong>
+                        <div class="medicos-solo">
+                            ${medicos.map(m => `<button class="medico-btn" onclick="toggleSolo('medico', ${turno.id}, ${m.id})">${m.nombre}</button>`).join('')}
+                        </div>
+                        <div class="subespecialidades-solo">
+                            ${subespecialidades.map(s => `<button class="subespecialidad-btn" onclick="toggleSolo('sub', ${turno.id}, '${s}')">${s}</button>`).join('')}
+                        </div>
+                    </div>
+                    <span class="eliminar-turno" onclick="eliminarTurnoCreado(${turno.id})">❌</span>
+                `;
+                turnoElement.id = `turno-${turno.id}`;
+                turnoElement.setAttribute('data-turno', JSON.stringify(turno));
+                turnoElement.addEventListener('dragstart', drag);
+                turnosList.appendChild(turnoElement);
+                actualizarBotonesSeleccionados(turno);
+            });
+        }
+
+        function togglePreferencia(tipo, turnoId, valor) {
+            const turno = turnosCreados.find(t => t.id === turnoId);
+            if (turno) {
+                if (turno.preferencia === `${tipo}:${valor}`) {
+                    turno.preferencia = '';
+                } else {
+                    turno.preferencia = `${tipo}:${valor}`;
+                    turno.solo = ''; // Limpiar la opción "solo" si se selecciona una preferencia
+                }
+                localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+                actualizarBotonesSeleccionados(turno);
+            }
+        }
+
+        function toggleSolo(tipo, turnoId, valor) {
+            const turno = turnosCreados.find(t => t.id === turnoId);
+            if (turno) {
+                if (turno.solo === `${tipo}:${valor}`) {
+                    turno.solo = '';
+                } else {
+                    turno.solo = `${tipo}:${valor}`;
+                    turno.preferencia = ''; // Limpiar la preferencia si se selecciona "solo"
+                }
+                localStorage.setItem('turnosCreados', JSON.stringify(turnosCreados));
+                actualizarBotonesSeleccionados(turno);
+            }
+        }
+
+        function actualizarBotonesSeleccionados(turno) {
+            const turnoElement = document.getElementById(`turno-${turno.id}`);
+            if (turnoElement) {
+                turnoElement.querySelectorAll('.medico-btn, .subespecialidad-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+
+                if (turno.preferencia) {
+                    const [tipo, valor] = turno.preferencia.split(':');
+                    turnoElement.querySelector(`.preferencia-container .${tipo === 'medico' ? 'medico-btn' : 'subespecialidad-btn'}[onclick*="${valor}"]`).classList.add('selected');
+                }
+
+                if (turno.solo) {
+                    const [tipo, valor] = turno.solo.split(':');
+                    turnoElement.querySelector(`.solo-container .${tipo === 'medico' ? 'medico-btn' : 'subespecialidad-btn'}[onclick*="${valor}"]`).classList.add('selected');
+                }
             }
         }
 
