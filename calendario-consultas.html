@@ -285,6 +285,17 @@
             cargarTurnosAsignados(semanaSeleccionada);
         }
 
+        function getDateOfISOWeek(week, year) {
+            const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+            const dayOfWeek = simple.getUTCDay();
+            const ISOweekStart = new Date(simple);
+            if (dayOfWeek <= 4)
+                ISOweekStart.setUTCDate(simple.getUTCDate() - dayOfWeek + 1);
+            else
+                ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - dayOfWeek);
+            return ISOweekStart;
+        }
+
         function generarCalendario(semana) {
             const calendario = document.getElementById('calendario');
             calendario.innerHTML = '';
@@ -294,7 +305,7 @@
             
             diasSemana.forEach((dia, index) => {
                 const fecha = new Date(primerDia);
-                fecha.setDate(fecha.getDate() + index);
+                fecha.setUTCDate(fecha.getUTCDate() + index);
                 const fechaStr = fecha.toISOString().split('T')[0];
                 
                 const diaElement = document.createElement('div');
@@ -313,17 +324,6 @@
             });
             
             actualizarCalendario();
-        }
-
-        function getDateOfISOWeek(week, year) {
-            const simple = new Date(year, 0, 1 + (week - 1) * 7);
-            const dayOfWeek = simple.getDay();
-            const ISOweekStart = new Date(simple);
-            if (dayOfWeek <= 4)
-                ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-            else
-                ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-            return ISOweekStart;
         }
 
         function esFestivo(fecha) {
