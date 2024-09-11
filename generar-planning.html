@@ -177,8 +177,8 @@
             });
 
             const semanaSeleccionada = document.getElementById('semana').value;
-            consultasCreadas = JSON.parse(localStorage.getItem(`consultas`)) || [];
-            turnosCreados = JSON.parse(localStorage.getItem(`turnosCreados`)) || [];
+            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
+            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
             
             // Filtrar consultas y turnos para la semana seleccionada
             const [year, week] = semanaSeleccionada.split('-W');
@@ -348,6 +348,15 @@
             dias.forEach((dia) => {
                 const fecha = dia.getAttribute('data-fecha');
                 dia.innerHTML = '';
+
+                // Mostrar consultas asignadas
+                const consultasDia = consultasAsignadas[fecha] || [];
+                consultasDia.forEach(consulta => {
+                    const consultaElement = document.createElement('div');
+                    consultaElement.className = 'asignacion';
+                    consultaElement.textContent = `Consulta: ${consulta.nombre} - ${consulta.medico || 'Sin asignar'}`;
+                    dia.appendChild(consultaElement);
+                });
 
                 // Mostrar consultas asignadas
                 const consultasDia = consultasAsignadas[fecha] || [];
