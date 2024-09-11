@@ -359,12 +359,24 @@
             const [year, week] = semanaSeleccionada.split('-W');
             const semanaPreviaNum = parseInt(week) - 1;
             const semanaPreviaYear = semanaPreviaNum > 0 ? year : parseInt(year) - 1;
-            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52; // Asumiendo que el año anterior tiene 52 semanas
+            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52;
             const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
 
             const asignacionesPrevias = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaPrevia}`)) || {};
             
-            turnosAsignados = {...asignacionesPrevias};
+            const fechaInicioSemanaActual = getDateOfISOWeek(parseInt(week), parseInt(year));
+            const fechaInicioSemanaPrevia = getDateOfISOWeek(semanaPreviaWeek, semanaPreviaYear);
+            
+            const nuevasAsignaciones = {};
+            Object.keys(asignacionesPrevias).forEach(fechaPrevia => {
+                const diferenciaEnDias = (new Date(fechaPrevia) - fechaInicioSemanaPrevia) / (1000 * 60 * 60 * 24);
+                const nuevaFecha = new Date(fechaInicioSemanaActual);
+                nuevaFecha.setDate(nuevaFecha.getDate() + diferenciaEnDias);
+                const nuevaFechaStr = nuevaFecha.toISOString().split('T')[0];
+                nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia];
+            });
+
+            turnosAsignados = nuevasAsignaciones;
             actualizarCalendario();
             
             alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
