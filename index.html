@@ -32,8 +32,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        .form-group input,
-        .form-group select {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 10px;
             box-sizing: border-box;
@@ -82,12 +81,10 @@
         .calendario .festivo-manual {
             background-color: #add8e6;
         }
-        .calendario .selected-red.festivo-nacional-madrid,
-        .calendario .selected-yellow.festivo-nacional-madrid {
+        .calendario .selected-red.festivo-nacional-madrid, .calendario .selected-yellow.festivo-nacional-madrid {
             background-image: linear-gradient(to bottom right, #ffcccc 50%, #ffa07a 50%);
         }
-        .calendario .selected-red.festivo-manual,
-        .calendario .selected-yellow.festivo-manual {
+        .calendario .selected-red.festivo-manual, .calendario .selected-yellow.festivo-manual {
             background-image: linear-gradient(to bottom right, #ffcccc 50%, #add8e6 50%);
         }
         .medico-list {
@@ -135,7 +132,6 @@
 <body>
     <div class="container">
         <h2>Plantilla de médicos - Preferencias</h2>
-        
         <!-- Formulario de registro de médicos -->
         <div class="form-group">
             <label for="nombre">Nombre</label>
@@ -175,7 +171,6 @@
                 <option value="10">Noviembre</option>
                 <option value="11">Diciembre</option>
             </select>
-
             <label for="anio">Año:</label>
             <select id="anio" onchange="generarCalendario()"></select>
         </div>
@@ -211,6 +206,7 @@
             <a href="subespecialidades.html">Subespecialidades</a>
             <a href="calendario-consultas.html">Calendario de Consultas</a>
             <a href="turnos.html">Calendario de Turnos</a>
+            <a href="generar-planning.html">Generar Planning</a>
         </nav>
     </div>
 
@@ -239,7 +235,6 @@
 
             if (nombre && apellidos && correo) {
                 const medico = { nombre, apellidos, correo };
-                
                 let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
                 medicos.push(medico);
                 localStorage.setItem('medicos', JSON.stringify(medicos));
@@ -293,7 +288,6 @@
             let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
             medicos = medicos.filter(m => m.correo !== correo);
             localStorage.setItem('medicos', JSON.stringify(medicos));
-
             cargarMedicos();
         }
 
@@ -346,8 +340,7 @@
                     calendarioHTML += '<div></div>';
                 } else {
                     const fecha = `${anio}-${(mes + 1).toString().padStart(2, '0')}-${diaActual.toString().padStart(2, '0')}`;
-                    let clase = calendarioSeleccion[fecha] === 'rojo' ? 'selected-red' : 
-                                calendarioSeleccion[fecha] === 'amarillo' ? 'selected-yellow' : '';
+                    let clase = calendarioSeleccion[fecha] === 'rojo' ? 'selected-red' : calendarioSeleccion[fecha] === 'amarillo' ? 'selected-yellow' : '';
                     const esFinDeSemana = i % 7 === 5 || i % 7 === 6 ? 'weekend' : '';
 
                     if (festivosNacionales[fecha] || festivosMadrid[fecha]) {
@@ -373,7 +366,6 @@
 
         function seleccionarDia(elemento, fecha) {
             let clase = elemento.className;
-
             if (clase.includes('selected-red')) {
                 clase = clase.replace('selected-red', 'selected-yellow');
                 calendarioSeleccion[fecha] = 'amarillo';
@@ -384,7 +376,6 @@
                 clase += ' selected-red';
                 calendarioSeleccion[fecha] = 'rojo';
             }
-
             elemento.className = clase;
         }
 
@@ -398,5 +389,13 @@
             alert("Cambios guardados correctamente.");
         }
     </script>
+
+    <nav>
+        <a href="festivos.html">Calendario de Festivos</a>
+        <a href="subespecialidades.html">Subespecialidades</a>
+        <a href="calendario-consultas.html">Calendario de Consultas</a>
+        <a href="turnos.html">Calendario de Turnos</a>
+        <a href="generar-planning.html">Generar Planning</a>
+    </nav>
 </body>
 </html>
