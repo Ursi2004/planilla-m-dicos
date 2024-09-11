@@ -264,16 +264,10 @@
             });
         }
 
-        function puedeSerAsignado(medico, fecha, asignacion) {
-            return !haTrabajoNochePrevia(medico.correo, fecha) &&
-                   !haTrabajoMuchoReciente(medico.correo, fecha) &&
-                   !excedeFinesDeSemana(medico.correo, fecha) &&
-                   !estaMedicoAsignadoEnFecha(medico.correo, fecha) &&
-                   (!asignacion.subespecialidad || subespecialidadesMedicos[medico.correo].includes(asignacion.subespecialidad));
-        }
-
         function asignarMedicoAConsulta(consulta, medicosDisponibles, fecha) {
-            const medicosAptos = medicosDisponibles.filter(medico => puedeSerAsignado(medico, fecha, consulta));
+            const medicosAptos = medicosDisponibles.filter(medico => 
+                puedeSerAsignado(medico, fecha, consulta)
+            );
             if (medicosAptos.length > 0) {
                 return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
             }
@@ -281,11 +275,21 @@
         }
 
         function asignarMedicoATurno(turno, medicosDisponibles, fecha) {
-            const medicosAptos = medicosDisponibles.filter(medico => puedeSerAsignado(medico, fecha, turno));
+            const medicosAptos = medicosDisponibles.filter(medico => 
+                puedeSerAsignado(medico, fecha, turno)
+            );
             if (medicosAptos.length > 0) {
                 return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
             }
             return null;
+        }
+
+        function puedeSerAsignado(medico, fecha, asignacion) {
+            return !haTrabajoNochePrevia(medico.correo, fecha) &&
+                   !haTrabajoMuchoReciente(medico.correo, fecha) &&
+                   !excedeFinesDeSemana(medico.correo, fecha) &&
+                   !estaMedicoAsignadoEnFecha(medico.correo, fecha) &&
+                   (!asignacion.subespecialidad || subespecialidadesMedicos[medico.correo].includes(asignacion.subespecialidad));
         }
 
         function haTrabajoNochePrevia(correoMedico, fecha) {
