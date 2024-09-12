@@ -27,73 +27,50 @@
         }
         .form-group {
             margin-bottom: 15px;
-            display: flex;
-            align-items: center;
         }
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            margin-right: 10px;
         }
-        .form-group input,
         .form-group select {
-            flex: 1;
+            width: 100%;
             padding: 10px;
-            box-sizing: border-box;
         }
         .btn {
+            width: 100%;
             padding: 10px;
             background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
-            margin-top: 10px;
         }
         .btn:hover {
             background-color: #45a049;
         }
-        .calendar-week {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
+        .subespecialidades-list {
             margin-top: 20px;
         }
-        .day {
-            border: 1px solid #ddd;
-            padding: 10px;
-            min-height: 100px;
-        }
-        .day-header {
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .day-content {
-            min-height: 50px;
-        }
-        .consulta {
-            background-color: #4CAF50;
-            color: white;
-            padding: 5px;
-            margin: 5px;
-            cursor: move;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .consultas-disponibles {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-        .papelera {
+        table {
             width: 100%;
-            height: 50px;
-            background-color: #ff6b6b;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .delete-btn {
+            background-color: red;
             color: white;
-            text-align: center;
-            line-height: 50px;
-            margin-top: 20px;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
         }
         nav {
             margin-top: 20px;
@@ -103,47 +80,19 @@
             text-decoration: none;
             color: #4CAF50;
         }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
+        .nueva-subespecialidad {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
         }
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 500px;
+        .nueva-subespecialidad input {
+            width: calc(100% - 110px);
+            padding: 5px;
         }
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .holiday {
-            background-color: #ffcccb;
-        }
-        .eliminar-consulta {
-            background-color: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 2px 5px;
-            cursor: pointer;
+        .nueva-subespecialidad button {
+            width: 100px;
+            padding: 5px;
             margin-left: 5px;
         }
     </style>
@@ -365,12 +314,12 @@
                 return;
             }
 
-            localStorage.setItem(`asignaciones_${semanaSeleccionada}`, JSON.stringify(consultasAsignadas));
+            localStorage.setItem(`consultasAsignadas_${semanaSeleccionada}`, JSON.stringify(consultasAsignadas));
             alert("Asignaciones guardadas correctamente.");
         }
 
         function cargarAsignacionesGuardadas(semana) {
-            const asignacionesGuardadas = JSON.parse(localStorage.getItem(`asignaciones_${semana}`)) || {};
+            const asignacionesGuardadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semana}`)) || {};
             consultasAsignadas = asignacionesGuardadas;
             actualizarCalendario();
         }
@@ -388,7 +337,7 @@
             const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52;
             const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
 
-            const asignacionesPrevias = JSON.parse(localStorage.getItem(`asignaciones_${semanaPrevia}`)) || {};
+            const asignacionesPrevias = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaPrevia}`)) || {};
             
             const fechaInicioSemanaActual = getDateOfISOWeek(parseInt(week), parseInt(year));
             const fechaInicioSemanaPrevia = getDateOfISOWeek(semanaPreviaWeek, semanaPreviaYear);
@@ -506,6 +455,7 @@
 
         window.onload = function() {
             generarOpcionesHoras();
+            cargarSubespecialidades();
             const currentDate = new Date();
             const currentWeek = getWeekNumber(currentDate);
             semanaInput.value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
