@@ -8,7 +8,76 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-@@ -80,11 +80,26 @@
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            margin-top: 20px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .subespecialidades-list {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        nav {
+            margin-top: 20px;
+        }
+        nav a {
+            margin: 0 10px;
             text-decoration: none;
             color: #4CAF50;
         }
@@ -36,7 +105,9 @@
         <div class="form-group">
             <label for="medico">Seleccionar Médico:</label>
             <select id="medico">
-@@ -94,16 +109,16 @@ <h2>Validar Subespecialidades</h2>
+                <!-- Se llenará automáticamente con los médicos de localStorage -->
+            </select>
+        </div>
         <div class="form-group">
             <label for="subespecialidades">Seleccionar Subespecialidades Adicionales:</label>
             <select id="subespecialidades" multiple>
@@ -59,7 +130,10 @@
         <div class="subespecialidades-list" id="subespecialidadesList">
             <h3>Médicos por Subespecialidad</h3>
         </div>
-@@ -116,8 +131,9 @@ <h3>Médicos por Subespecialidad</h3>
+        <nav>
+            <a href="index.html">Volver al Registro de Médicos</a>
+        </nav>
+    </div>
     <script>
         const medicoSelect = document.getElementById('medico');
         const subespecialidadesList = document.getElementById('subespecialidadesList');
@@ -70,7 +144,10 @@
             "Pediatría General",
             "Endocrinología pediátrica",
             "Neumología pediátrica",
-@@ -128,10 +144,31 @@ <h3>Médicos por Subespecialidad</h3>
+            "Neurología pediátrica",
+            "Nefrología pediátrica",
+            "CIP-CIN",
+            "Gastroenterología pediátrica"
         ];
 
         window.onload = function() {
@@ -102,7 +179,19 @@
         function cargarMedicos() {
             const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
             const subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-@@ -152,15 +189,14 @@ <h3>Médicos por Subespecialidad</h3>
+            
+            medicoSelect.innerHTML = '<option value="">Seleccione un médico</option>';
+            medicos.forEach(medico => {
+                const option = document.createElement('option');
+                option.value = medico.correo;
+                option.textContent = `${medico.nombre} ${medico.apellidos}`;
+                medicoSelect.appendChild(option);
+            });
+            medicoSelect.addEventListener('change', function() {
+                const correoMedico = this.value;
+                const subespecialidades = subespecialidadesMedicos[correoMedico] || ["Pediatría General"];
+                actualizarSubespecialidadesSeleccionadas(subespecialidades);
+            });
         }
 
         function actualizarSubespecialidadesSeleccionadas(subespecialidades) {
@@ -119,7 +208,13 @@
 
             if (!correoMedico) {
                 alert("Selecciona un médico.");
-@@ -177,7 +213,7 @@ <h3>Médicos por Subespecialidad</h3>
+                return;
+            }
+            let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+            subespecialidadesMedicos[correoMedico] = ["Pediatría General", ...subespecialidadesSeleccionadas];
+            localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+            mostrarTablasSubespecialidades();
+        }
         function mostrarTablasSubespecialidades() {
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
             let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
@@ -128,7 +223,9 @@
 
             subespecialidadesPosibles.forEach(subespecialidad => {
                 const table = document.createElement('table');
-@@ -188,6 +224,15 @@ <h3>Médicos por Subespecialidad</h3>
+                const thead = document.createElement('thead');
+                const tbody = document.createElement('tbody');
+                const headerRow = document.createElement('tr');
                 const thSubespecialidad = document.createElement('th');
                 thSubespecialidad.colSpan = 2;
                 thSubespecialidad.textContent = subespecialidad;
@@ -144,7 +241,25 @@
                 headerRow.appendChild(thSubespecialidad);
                 thead.appendChild(headerRow);
 
-@@ -215,7 +260,7 @@ <h3>Médicos por Subespecialidad</h3>
+                let tieneMedicos = false;
+                Object.keys(subespecialidadesMedicos).forEach(correo => {
+                    if (subespecialidadesMedicos[correo].includes(subespecialidad)) {
+                        let medico = medicos.find(m => m.correo === correo);
+                        if (medico) {
+                            const row = document.createElement('tr');
+                            const tdNombre = document.createElement('td');
+                            const tdEliminar = document.createElement('td');
+                            const btnEliminar = document.createElement('button');
+                            tdNombre.textContent = `${medico.nombre} ${medico.apellidos}`;
+                            btnEliminar.textContent = "Eliminar";
+                            btnEliminar.classList.add('delete-btn');
+                            btnEliminar.onclick = () => eliminarSubespecialidad(correo, subespecialidad);
+                            tdEliminar.appendChild(btnEliminar);
+                            row.appendChild(tdNombre);
+                            row.appendChild(tdEliminar);
+                            tbody.appendChild(row);
+                            tieneMedicos = true;
+                        }
                     }
                 });
 
@@ -153,7 +268,8 @@
                     table.appendChild(thead);
                     table.appendChild(tbody);
                     subespecialidadesList.appendChild(table);
-@@ -224,19 +269,55 @@ <h3>Médicos por Subespecialidad</h3>
+                }
+            });
         }
 
         function eliminarSubespecialidad(correo, subespecialidad) {
