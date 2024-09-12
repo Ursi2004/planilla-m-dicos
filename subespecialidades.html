@@ -3,80 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Consultas</title>
+    <title>Validar Subespecialidades</title>
+    <title>Gestión de Subespecialidades</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            margin-top: 20px;
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-        }
-        .btn {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #45a049;
-        }
-        .subespecialidades-list {
-            margin-top: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .delete-btn {
-            background-color: red;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-        nav {
-            margin-top: 20px;
-        }
-        nav a {
-            margin: 0 10px;
+@@ -80,11 +80,26 @@
             text-decoration: none;
             color: #4CAF50;
         }
@@ -99,384 +31,184 @@
 </head>
 <body>
     <div class="container">
-        <h2>Calendario de Consultas</h2>
-        
+        <h2>Validar Subespecialidades</h2>
+        <h2>Gestión de Subespecialidades</h2>
         <div class="form-group">
-            <label for="nombreConsulta">Nombre de la Consulta:</label>
-            <input type="text" id="nombreConsulta" placeholder="Ej: Consulta General">
-        </div>
+            <label for="medico">Seleccionar Médico:</label>
+            <select id="medico">
+@@ -94,16 +109,16 @@ <h2>Validar Subespecialidades</h2>
         <div class="form-group">
-            <label for="horaInicio">Desde:</label>
-            <select id="horaInicio"></select>
+            <label for="subespecialidades">Seleccionar Subespecialidades Adicionales:</label>
+            <select id="subespecialidades" multiple>
+                <option value="Endocrinología pediátrica">Endocrinología pediátrica</option>
+                <option value="Neumología pediátrica">Neumología pediátrica</option>
+                <option value="Neurología pediátrica">Neurología pediátrica</option>
+                <option value="Nefrología pediátrica">Nefrología pediátrica</option>
+                <option value="CIP-CIN">CIP-CIN</option>
+                <option value="Gastroenterología pediátrica">Gastroenterología pediátrica</option>
+                <!-- Se llenará dinámicamente con las subespecialidades disponibles -->
+            </select>
         </div>
-        <div class="form-group">
-            <label for="horaFin">Hasta:</label>
-            <select id="horaFin"></select>
-        </div>
-        <button class="btn" onclick="crearConsulta()">Crear Consulta</button>
+        <button class="btn" onclick="asignarSubespecialidades()">Asignar Subespecialidades</button>
 
-        <div class="form-group">
-            <label for="semana">Seleccionar Semana:</label>
-            <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
-            <button class="btn" onclick="copiarSemanaPreviaAsignaciones()">Copiar Semana Previa</button>
+        <div class="nueva-subespecialidad">
+            <input type="text" id="nuevaSubespecialidad" placeholder="Nueva subespecialidad">
+            <button onclick="agregarNuevaSubespecialidad()">Agregar</button>
         </div>
-        <div id="calendarioSemanal" style="display: none;">
-            <div class="calendar-week" id="calendarWeek"></div>
-            <div class="consultas-disponibles" id="consultasDisponibles">
-                <h3>Consultas Disponibles</h3>
-            </div>
-            <div class="papelera" ondrop="eliminarConsulta(event)" ondragover="allowDrop(event)">
-                Arrastre aquí para eliminar consulta
-            </div>
-        </div>
-        <button class="btn" onclick="guardarAsignaciones()">Guardar Asignaciones</button>
-        <nav>
-            <a href="index.html">Volver al Inicio</a>
-        </nav>
-    </div>
 
-    <div id="subespecialidadModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Seleccionar Subespecialidad</h3>
-            <select id="subespecialidadSelect" onchange="cargarMedicosSubespecialidad()"></select>
-            <h3>Seleccionar Médico</h3>
-            <select id="medicoSelect"></select>
-            <button onclick="confirmarAsignacion()">Confirmar</button>
+        <div class="subespecialidades-list" id="subespecialidadesList">
+            <h3>Médicos por Subespecialidad</h3>
         </div>
-    </div>
-
+@@ -116,8 +131,9 @@ <h3>Médicos por Subespecialidad</h3>
     <script>
-        const semanaInput = document.getElementById('semana');
-        const calendarWeek = document.getElementById('calendarWeek');
-        const consultasDisponibles = document.getElementById('consultasDisponibles');
-        const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-        let consultaActual;
-        let diaSeleccionado;
-        const modal = document.getElementById('subespecialidadModal');
-        const span = document.getElementsByClassName("close")[0];
-        const subespecialidadSelect = document.getElementById('subespecialidadSelect');
-        const medicoSelect = document.getElementById('medicoSelect');
+        const medicoSelect = document.getElementById('medico');
+        const subespecialidadesList = document.getElementById('subespecialidadesList');
+        const subespecialidadesSelect = document.getElementById('subespecialidades');
 
-        let consultas = [];
-        let consultasAsignadas = {};
-
-        function generarOpcionesHoras() {
-            const horaInicio = document.getElementById('horaInicio');
-            const horaFin = document.getElementById('horaFin');
-            for (let i = 0; i < 24; i++) {
-                for (let j = 0; j < 60; j += 30) {
-                    const hora = `${i.toString().padStart(2, '0')}:${j.toString().padStart(2, '0')}`;
-                    horaInicio.innerHTML += `<option value="${hora}">${hora}</option>`;
-                    horaFin.innerHTML += `<option value="${hora}">${hora}</option>`;
-                }
-            }
-        }
-
-        function crearConsulta() {
-            const nombre = document.getElementById('nombreConsulta').value;
-            const inicio = document.getElementById('horaInicio').value;
-            const fin = document.getElementById('horaFin').value;
-            
-            if (nombre && inicio && fin) {
-                const consulta = { id: Date.now(), nombre, inicio, fin };
-                consultas.push(consulta);
-                localStorage.setItem('consultas', JSON.stringify(consultas));
-                cargarConsultas();
-                
-                document.getElementById('nombreConsulta').value = '';
-            } else {
-                alert('Por favor, complete todos los campos.');
-            }
-        }
-
-        function mostrarCalendarioSemanal() {
-            const semanaSeleccionada = semanaInput.value;
-            if (!semanaSeleccionada) return;
-
-            document.getElementById('calendarioSemanal').style.display = 'block';
-            generarCalendarioSemanal(semanaSeleccionada);
-            cargarConsultas();
-            cargarAsignacionesGuardadas(semanaSeleccionada);
-        }
-
-        function generarCalendarioSemanal(semana) {
-            calendarWeek.innerHTML = '';
-            const [year, week] = semana.split('-W');
-            const fechaInicio = getDateOfISOWeek(parseInt(week), parseInt(year));
-
-            const festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
-            const festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
-            const festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
-
-            diasSemana.forEach((dia, index) => {
-                const fecha = new Date(fechaInicio);
-                fecha.setDate(fecha.getDate() + index);
-                const fechaStr = fecha.toISOString().split('T')[0];
-                const dayElement = document.createElement('div');
-                dayElement.className = 'day';
-                
-                let holidayInfo = '';
-                if (festivosNacionales[fechaStr] || festivosMadrid[fechaStr]) {
-                    dayElement.classList.add('holiday');
-                    holidayInfo = '<br><small>Festivo</small>';
-                } else if (festivosManuales[fechaStr]) {
-                    dayElement.classList.add('holiday');
-                    holidayInfo = '<br><small>Festivo añadido</small>';
-                }
-
-                dayElement.innerHTML = `
-                    <div class="day-header">${dia}<br>${fecha.toLocaleDateString()}${holidayInfo}</div>
-                    <div class="day-content" ondrop="drop(event)" ondragover="allowDrop(event)" data-fecha="${fechaStr}"></div>
-                `;
-                calendarWeek.appendChild(dayElement);
-            });
-        }
-
-        function getDateOfISOWeek(week, year) {
-            const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
-            const dayOfWeek = simple.getUTCDay();
-            const ISOweekStart = new Date(simple);
-            if (dayOfWeek <= 4)
-                ISOweekStart.setUTCDate(simple.getUTCDate() - dayOfWeek + 1);
-            else
-                ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - dayOfWeek);
-            return ISOweekStart;
-        }
-
-        function cargarConsultas() {
-            consultas = JSON.parse(localStorage.getItem('consultas')) || [];
-            consultasDisponibles.innerHTML = '<h3>Consultas Disponibles</h3>';
-            consultas.forEach(consulta => {
-                const consultaElement = document.createElement('div');
-                consultaElement.className = 'consulta';
-                consultaElement.draggable = true;
-                consultaElement.id = `consulta-${consulta.id}`;
-                consultaElement.innerHTML = `
-                    <span>${consulta.nombre} (${consulta.inicio} - ${consulta.fin})</span>
-                    <button class="eliminar-consulta" onclick="eliminarConsultaCreada(${consulta.id})">Eliminar</button>
-                `;
-                consultaElement.addEventListener('dragstart', drag);
-                consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
-                consultasDisponibles.appendChild(consultaElement);
-            });
-        }
-
-        function eliminarConsultaCreada(id) {
-            consultas = consultas.filter(c => c.id !== id);
-            localStorage.setItem('consultas', JSON.stringify(consultas));
-            cargarConsultas();
-        }
-
-        function allowDrop(ev) {
-            ev.preventDefault();
-        }
-
-        function drag(ev) {
-            ev.dataTransfer.setData("text/plain", ev.target.id);
-        }
-
-        function drop(ev) {
-            ev.preventDefault();
-            const data = ev.dataTransfer.getData("text/plain");
-            const consultaElement = document.getElementById(data);
-            if (consultaElement) {
-                const dayElement = ev.target.closest('.day');
-                if (dayElement.classList.contains('holiday')) {
-                    alert("No se pueden asignar consultas en días festivos.");
-                    return;
-                }
-                consultaActual = JSON.parse(consultaElement.getAttribute('data-consulta'));
-                diaSeleccionado = ev.target.closest('.day-content');
-                mostrarModalSubespecialidad();
-            }
-        }
-
-        function eliminarConsulta(ev) {
-            ev.preventDefault();
-            const data = ev.dataTransfer.getData("text/plain");
-            const consultaElement = document.getElementById(data);
-            if (consultaElement && consultaElement.classList.contains('consulta-asignada')) {
-                const consulta = JSON.parse(consultaElement.getAttribute('data-consulta'));
-                const fecha = consultaElement.closest('.day-content').getAttribute('data-fecha');
-                consultasAsignadas[fecha] = consultasAsignadas[fecha].filter(c => c.asignacionId !== consulta.asignacionId);
-                if (consultasAsignadas[fecha].length === 0) {
-                    delete consultasAsignadas[fecha];
-                }
-                actualizarCalendario();
-            }
-        }
-
-        function guardarAsignaciones() {
-            const semanaSeleccionada = semanaInput.value;
-            if (!semanaSeleccionada) {
-                alert("Por favor, selecciona una semana antes de guardar.");
-                return;
-            }
-
-            localStorage.setItem(`consultasAsignadas_${semanaSeleccionada}`, JSON.stringify(consultasAsignadas));
-            alert("Asignaciones guardadas correctamente.");
-        }
-
-        function cargarAsignacionesGuardadas(semana) {
-            const asignacionesGuardadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semana}`)) || {};
-            consultasAsignadas = asignacionesGuardadas;
-            actualizarCalendario();
-        }
-
-        function copiarSemanaPreviaAsignaciones() {
-            const semanaSeleccionada = semanaInput.value;
-            if (!semanaSeleccionada) {
-                alert("Por favor, selecciona una semana antes de copiar.");
-                return;
-            }
-
-            const [year, week] = semanaSeleccionada.split('-W');
-            const semanaPreviaNum = parseInt(week) - 1;
-            const semanaPreviaYear = semanaPreviaNum > 0 ? year : parseInt(year) - 1;
-            const semanaPreviaWeek = semanaPreviaNum > 0 ? semanaPreviaNum : 52;
-            const semanaPrevia = `${semanaPreviaYear}-W${semanaPreviaWeek.toString().padStart(2, '0')}`;
-
-            const asignacionesPrevias = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaPrevia}`)) || {};
-            
-            const fechaInicioSemanaActual = getDateOfISOWeek(parseInt(week), parseInt(year));
-            const fechaInicioSemanaPrevia = getDateOfISOWeek(semanaPreviaWeek, semanaPreviaYear);
-            
-            const nuevasAsignaciones = {};
-            Object.keys(asignacionesPrevias).forEach(fechaPrevia => {
-                const diferenciaEnDias = (new Date(fechaPrevia) - fechaInicioSemanaPrevia) / (1000 * 60 * 60 * 24);
-                const nuevaFecha = new Date(fechaInicioSemanaActual);
-                nuevaFecha.setDate(nuevaFecha.getDate() + diferenciaEnDias);
-                const nuevaFechaStr = nuevaFecha.toISOString().split('T')[0];
-                nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia].map(consulta => ({
-                    ...consulta,
-                    asignacionId: Date.now() + Math.random()
-                }));
-            });
-
-            consultasAsignadas = nuevasAsignaciones;
-            actualizarCalendario();
-            
-            alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
-        }
-
-        function actualizarCalendario() {
-            const dias = document.querySelectorAll('.day-content');
-            dias.forEach((dia) => {
-                const fecha = dia.getAttribute('data-fecha');
-                const consultasDia = consultasAsignadas[fecha] || [];
-                dia.innerHTML = '';
-                consultasDia.forEach((consulta) => {
-                    const consultaElement = document.createElement('div');
-                    consultaElement.className = 'consulta consulta-asignada';
-                    consultaElement.draggable = true;
-                    consultaElement.innerHTML = `${consulta.nombre} (${consulta.inicio} - ${consulta.fin})<br>
-                        ${consulta.subespecialidad ? `Subespecialidad: ${consulta.subespecialidad}<br>` : ''}
-                        ${consulta.medico ? `Médico: ${consulta.medico}` : ''}`;
-                    consultaElement.id = `consulta-asignada-${consulta.asignacionId}`;
-                    consultaElement.setAttribute('data-consulta', JSON.stringify(consulta));
-                    consultaElement.addEventListener('dragstart', drag);
-                    dia.appendChild(consultaElement);
-                });
-            });
-        }
-
-        function mostrarModalSubespecialidad() {
-            cargarSubespecialidades();
-            modal.style.display = "block";
-        }
-
-        function cargarSubespecialidades() {
-            const subespecialidades = JSON.parse(localStorage.getItem('subespecialidadesPosibles')) || [];
-            subespecialidadSelect.innerHTML = '<option value="">Seleccione una subespecialidad</option>';
-            subespecialidades.forEach(sub => {
-                const option = document.createElement('option');
-                option.value = sub;
-                option.textContent = sub;
-                subespecialidadSelect.appendChild(option);
-            });
-        }
-
-        function cargarMedicosSubespecialidad() {
-            const subespecialidad = subespecialidadSelect.value;
-            const subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            
-            medicoSelect.innerHTML = '<option value="cualquiera">Cualquiera</option>';
-            
-            medicos.forEach(medico => {
-                if (subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(subespecialidad)) {
-                    const option = document.createElement('option');
-                    option.value = medico.correo;
-                    option.textContent = `${medico.nombre} ${medico.apellidos}`;
-                    medicoSelect.appendChild(option);
-                }
-            });
-        }
-
-        function confirmarAsignacion() {
-            const subespecialidadSeleccionada = subespecialidadSelect.value;
-            const medicoSeleccionado = medicoSelect.value;
-
-            if (!subespecialidadSeleccionada) {
-                alert("Por favor, selecciona una subespecialidad.");
-                return;
-            }
-
-            let medicoAsignado;
-            if (medicoSeleccionado === "cualquiera") {
-                const medicosDisponibles = Array.from(medicoSelect.options).slice(1);
-                if (medicosDisponibles.length === 0) {
-                    alert("No hay médicos disponibles para esta subespecialidad.");
-                    return;
-                }
-                const medicoAleatorio = medicosDisponibles[Math.floor(Math.random() * medicosDisponibles.length)];
-                medicoAsignado = medicoAleatorio.textContent;
-            } else {
-                medicoAsignado = medicoSelect.options[medicoSelect.selectedIndex].textContent;
-            }
-
-            const consultaAsignada = {
-                ...consultaActual,
-                subespecialidad: subespecialidadSeleccionada,
-                medico: medicoAsignado,
-                asignacionId: Date.now()
-            };
-
-            const fecha = diaSeleccionado.getAttribute('data-fecha');
-            if (!consultasAsignadas[fecha]) {
-                consultasAsignadas[fecha] = [];
-            }
-            consultasAsignadas[fecha].push(consultaAsignada);
-
-            actualizarCalendario();
-            modal.style.display = "none";
-        }
+        const subespecialidadesPosibles = [
+        let subespecialidadesPosibles = [
+            "Pediatría General",
+            "Endocrinología pediátrica",
+            "Neumología pediátrica",
+@@ -128,10 +144,31 @@ <h3>Médicos por Subespecialidad</h3>
+        ];
 
         window.onload = function() {
-            generarOpcionesHoras();
             cargarSubespecialidades();
-            const currentDate = new Date();
-            const currentWeek = getWeekNumber(currentDate);
-            semanaInput.value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
-            mostrarCalendarioSemanal();
+            cargarMedicos();
+            mostrarTablasSubespecialidades();
         };
 
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-            return weekNo;
+        function cargarSubespecialidades() {
+            const subespecialidadesGuardadas = JSON.parse(localStorage.getItem('subespecialidadesPosibles'));
+            if (subespecialidadesGuardadas) {
+                subespecialidadesPosibles = subespecialidadesGuardadas;
+            }
+            actualizarSelectSubespecialidades();
         }
 
-        span.onclick = function() {
-            modal.style.display = "none";
+        function actualizarSelectSubespecialidades() {
+            subespecialidadesSelect.innerHTML = '';
+            subespecialidadesPosibles.forEach(sub => {
+                if (sub !== "Pediatría General") {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    subespecialidadesSelect.appendChild(option);
+                }
+            });
         }
 
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
+        function cargarMedicos() {
+            const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            const subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+@@ -152,15 +189,14 @@ <h3>Médicos por Subespecialidad</h3>
+        }
+
+        function actualizarSubespecialidadesSeleccionadas(subespecialidades) {
+            const subespecialidadesSelect = document.getElementById('subespecialidades');
+            Array.from(subespecialidadesSelect.options).forEach(option => {
+                option.selected = subespecialidades.includes(option.value);
+            });
+        }
+
+        function asignarSubespecialidades() {
+            const correoMedico = medicoSelect.value;
+            const subespecialidadesSeleccionadas = Array.from(document.getElementById('subespecialidades').selectedOptions).map(option => option.value);
+            const subespecialidadesSeleccionadas = Array.from(subespecialidadesSelect.selectedOptions).map(option => option.value);
+
+            if (!correoMedico) {
+                alert("Selecciona un médico.");
+@@ -177,7 +213,7 @@ <h3>Médicos por Subespecialidad</h3>
+        function mostrarTablasSubespecialidades() {
+            let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+            let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            subespecialidadesList.innerHTML = '';  // Limpiar las tablas anteriores
+            subespecialidadesList.innerHTML = '';
+
+            subespecialidadesPosibles.forEach(subespecialidad => {
+                const table = document.createElement('table');
+@@ -188,6 +224,15 @@ <h3>Médicos por Subespecialidad</h3>
+                const thSubespecialidad = document.createElement('th');
+                thSubespecialidad.colSpan = 2;
+                thSubespecialidad.textContent = subespecialidad;
+
+                if (subespecialidad !== "Pediatría General") {
+                    const btnEliminarGlobal = document.createElement('button');
+                    btnEliminarGlobal.textContent = "Eliminar Subespecialidad";
+                    btnEliminarGlobal.classList.add('delete-btn');
+                    btnEliminarGlobal.onclick = () => eliminarSubespecialidadGlobal(subespecialidad);
+                    thSubespecialidad.appendChild(btnEliminarGlobal);
+                }
+
+                headerRow.appendChild(thSubespecialidad);
+                thead.appendChild(headerRow);
+
+@@ -215,7 +260,7 @@ <h3>Médicos por Subespecialidad</h3>
+                    }
+                });
+
+                if (tieneMedicos) {
+                if (tieneMedicos || subespecialidad === "Pediatría General") {
+                    table.appendChild(thead);
+                    table.appendChild(tbody);
+                    subespecialidadesList.appendChild(table);
+@@ -224,19 +269,55 @@ <h3>Médicos por Subespecialidad</h3>
+        }
+
+        function eliminarSubespecialidad(correo, subespecialidad) {
+            if (subespecialidad === "Pediatría General") {
+                alert("No puedes eliminar la subespecialidad predeterminada.");
+                return;
+            }
+
+            let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+
+            if (subespecialidadesMedicos[correo]) {
+                if (subespecialidad === "Pediatría General") {
+                    alert("No puedes eliminar la subespecialidad predeterminada.");
+                    return;
+                }
+
+                subespecialidadesMedicos[correo] = subespecialidadesMedicos[correo].filter(sub => sub !== subespecialidad);
+                localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+                mostrarTablasSubespecialidades();
+            }
+        }
+
+        function agregarNuevaSubespecialidad() {
+            const nuevaSubespecialidad = document.getElementById('nuevaSubespecialidad').value.trim();
+            if (nuevaSubespecialidad && !subespecialidadesPosibles.includes(nuevaSubespecialidad)) {
+                subespecialidadesPosibles.push(nuevaSubespecialidad);
+                localStorage.setItem('subespecialidadesPosibles', JSON.stringify(subespecialidadesPosibles));
+                actualizarSelectSubespecialidades();
+                document.getElementById('nuevaSubespecialidad').value = '';
+                mostrarTablasSubespecialidades();
+            } else {
+                alert('La subespecialidad ya existe o el campo está vacío.');
+            }
+        }
+
+        function eliminarSubespecialidadGlobal(subespecialidad) {
+            if (subespecialidad === "Pediatría General") {
+                alert("No puedes eliminar la subespecialidad predeterminada.");
+                return;
+            }
+
+            const index = subespecialidadesPosibles.indexOf(subespecialidad);
+            if (index > -1) {
+                subespecialidadesPosibles.splice(index, 1);
+                localStorage.setItem('subespecialidadesPosibles', JSON.stringify(subespecialidadesPosibles));
+                actualizarSelectSubespecialidades();
+
+                // Eliminar la subespecialidad de todos los médicos
+                let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+                Object.keys(subespecialidadesMedicos).forEach(correo => {
+                    subespecialidadesMedicos[correo] = subespecialidadesMedicos[correo].filter(sub => sub !== subespecialidad);
+                });
+                localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+
+                mostrarTablasSubespecialidades();
             }
         }
     </script>
