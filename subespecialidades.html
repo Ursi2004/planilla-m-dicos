@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validar Subespecialidades</title>
     <title>Gestión de Subespecialidades</title>
     <style>
         body {
@@ -100,7 +99,6 @@
 </head>
 <body>
     <div class="container">
-        <h2>Validar Subespecialidades</h2>
         <h2>Gestión de Subespecialidades</h2>
         <div class="form-group">
             <label for="medico">Seleccionar Médico:</label>
@@ -111,12 +109,6 @@
         <div class="form-group">
             <label for="subespecialidades">Seleccionar Subespecialidades Adicionales:</label>
             <select id="subespecialidades" multiple>
-                <option value="Endocrinología pediátrica">Endocrinología pediátrica</option>
-                <option value="Neumología pediátrica">Neumología pediátrica</option>
-                <option value="Neurología pediátrica">Neurología pediátrica</option>
-                <option value="Nefrología pediátrica">Nefrología pediátrica</option>
-                <option value="CIP-CIN">CIP-CIN</option>
-                <option value="Gastroenterología pediátrica">Gastroenterología pediátrica</option>
                 <!-- Se llenará dinámicamente con las subespecialidades disponibles -->
             </select>
         </div>
@@ -130,16 +122,17 @@
         <div class="subespecialidades-list" id="subespecialidadesList">
             <h3>Médicos por Subespecialidad</h3>
         </div>
+
         <nav>
             <a href="index.html">Volver al Registro de Médicos</a>
         </nav>
     </div>
+
     <script>
         const medicoSelect = document.getElementById('medico');
         const subespecialidadesList = document.getElementById('subespecialidadesList');
         const subespecialidadesSelect = document.getElementById('subespecialidades');
 
-        const subespecialidadesPosibles = [
         let subespecialidadesPosibles = [
             "Pediatría General",
             "Endocrinología pediátrica",
@@ -187,6 +180,7 @@
                 option.textContent = `${medico.nombre} ${medico.apellidos}`;
                 medicoSelect.appendChild(option);
             });
+
             medicoSelect.addEventListener('change', function() {
                 const correoMedico = this.value;
                 const subespecialidades = subespecialidadesMedicos[correoMedico] || ["Pediatría General"];
@@ -195,7 +189,6 @@
         }
 
         function actualizarSubespecialidadesSeleccionadas(subespecialidades) {
-            const subespecialidadesSelect = document.getElementById('subespecialidades');
             Array.from(subespecialidadesSelect.options).forEach(option => {
                 option.selected = subespecialidades.includes(option.value);
             });
@@ -203,22 +196,23 @@
 
         function asignarSubespecialidades() {
             const correoMedico = medicoSelect.value;
-            const subespecialidadesSeleccionadas = Array.from(document.getElementById('subespecialidades').selectedOptions).map(option => option.value);
             const subespecialidadesSeleccionadas = Array.from(subespecialidadesSelect.selectedOptions).map(option => option.value);
 
             if (!correoMedico) {
                 alert("Selecciona un médico.");
                 return;
             }
+
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
             subespecialidadesMedicos[correoMedico] = ["Pediatría General", ...subespecialidadesSeleccionadas];
             localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
+
             mostrarTablasSubespecialidades();
         }
+
         function mostrarTablasSubespecialidades() {
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
             let medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            subespecialidadesList.innerHTML = '';  // Limpiar las tablas anteriores
             subespecialidadesList.innerHTML = '';
 
             subespecialidadesPosibles.forEach(subespecialidad => {
@@ -226,10 +220,11 @@
                 const thead = document.createElement('thead');
                 const tbody = document.createElement('tbody');
                 const headerRow = document.createElement('tr');
+
                 const thSubespecialidad = document.createElement('th');
                 thSubespecialidad.colSpan = 2;
                 thSubespecialidad.textContent = subespecialidad;
-
+                
                 if (subespecialidad !== "Pediatría General") {
                     const btnEliminarGlobal = document.createElement('button');
                     btnEliminarGlobal.textContent = "Eliminar Subespecialidad";
@@ -250,10 +245,12 @@
                             const tdNombre = document.createElement('td');
                             const tdEliminar = document.createElement('td');
                             const btnEliminar = document.createElement('button');
+
                             tdNombre.textContent = `${medico.nombre} ${medico.apellidos}`;
                             btnEliminar.textContent = "Eliminar";
                             btnEliminar.classList.add('delete-btn');
                             btnEliminar.onclick = () => eliminarSubespecialidad(correo, subespecialidad);
+
                             tdEliminar.appendChild(btnEliminar);
                             row.appendChild(tdNombre);
                             row.appendChild(tdEliminar);
@@ -263,7 +260,6 @@
                     }
                 });
 
-                if (tieneMedicos) {
                 if (tieneMedicos || subespecialidad === "Pediatría General") {
                     table.appendChild(thead);
                     table.appendChild(tbody);
@@ -281,11 +277,6 @@
             let subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
 
             if (subespecialidadesMedicos[correo]) {
-                if (subespecialidad === "Pediatría General") {
-                    alert("No puedes eliminar la subespecialidad predeterminada.");
-                    return;
-                }
-
                 subespecialidadesMedicos[correo] = subespecialidadesMedicos[correo].filter(sub => sub !== subespecialidad);
                 localStorage.setItem('subespecialidadesMedicos', JSON.stringify(subespecialidadesMedicos));
                 mostrarTablasSubespecialidades();
