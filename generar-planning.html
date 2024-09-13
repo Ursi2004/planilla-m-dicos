@@ -97,11 +97,15 @@
         let festivosManuales = {};
 
         function cargarDatos() {
+            console.log("Cargando datos...");
             turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
             consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
             festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
             festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
             festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+
+            console.log("Turnos cargados:", turnosCreados);
+            console.log("Consultas cargadas:", consultasCreadas);
         }
 
         function generarCalendario() {
@@ -112,34 +116,11 @@
             const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
             const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-            diasSemana.forEach(dia => {
-                const diaHeader = document.createElement('div');
-                diaHeader.className = 'dia-header';
-                diaHeader.textContent = dia;
-                calendario.appendChild(diaHeader);
-            });
-
-            for (let i = 0; i < primerDia.getDay(); i++) {
-                const diaElement = document.createElement('div');
-                diaElement.className = 'dia';
-                calendario.appendChild(diaElement);
-            }
-
-            for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-                const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), dia);
-                const diaElement = document.createElement('div');
-                diaElement.className = 'dia';
-                if (esFestivo(fecha)) diaElement.classList.add('festivo');
-                
-                diaElement.innerHTML = `
-                    <div class="dia-header">${dia}</div>
-                    <div class="dia-content" data-fecha="${formatearFecha(fecha)}"></div>
-                `;
-                calendario.appendChild(diaElement);
-            }
+            // ... (mantener el código de generación del calendario) ...
         }
 
         function actualizarCalendario() {
+            console.log("Actualizando calendario...");
             const dias = document.querySelectorAll('.dia-content');
             dias.forEach((dia) => {
                 const fecha = dia.getAttribute('data-fecha');
@@ -161,6 +142,7 @@
                     dia.appendChild(turnoElement);
                 });
             });
+            console.log("Calendario actualizado");
         }
 
         function generarPlanning() {
