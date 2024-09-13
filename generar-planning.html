@@ -204,10 +204,8 @@
             // Rellenar los días restantes del mes, incluyendo el día actual
             for (let fecha = new Date(Math.max(primerDia, hoy)); fecha <= ultimoDiaMes; fecha.setDate(fecha.getDate() + 1)) {
                 const fechaStr = fecha.toISOString().split('T')[0];
-                const esDiaFestivo = esFestivo(fechaStr);
-                
-                if (!tieneTurnosAsignados(fechaStr) && !esDiaFestivo) {
-                    const asignacionesDelDia = asignarConsultasYTurnos(fechaStr, esDiaFestivo);
+                if (!esFestivo(fechaStr) && !tieneTurnosOConsultas(fechaStr)) {
+                    const asignacionesDelDia = asignarConsultasYTurnos(fechaStr);
                     if (asignacionesDelDia === 0) {
                         diasSinAsignacion.push(fechaStr);
                     }
@@ -223,26 +221,31 @@
             }
         }
 
-        function asignarConsultasYTurnos(fecha, esFestivo) {
+        function tieneTurnosOConsultas(fecha) {
+            return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) ||
+                   (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0) ||
+                   (turnosCreados.some(t => t.fecha === fecha)) ||
+                   (consultasCreadas.some(c => c.fecha === fecha));
+        }
+
+        function asignarConsultasYTurnos(fecha) {
             let medicosDisponibles = obtenerMedicosDisponibles(fecha);
             let asignacionesRealizadas = 0;
             
-            // Asignar consultas solo si no es festivo
-            if (!esFestivo) {
-                consultasCreadas.forEach(consulta => {
-                    if (consulta.fecha === fecha && !consulta.medico) {
-                        const medicoAsignado = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
-                        if (medicoAsignado) {
-                            if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
-                            consultasAsignadas[fecha].push({...consulta, medico: medicoAsignado});
-                            medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
-                            asignacionesRealizadas++;
-                        }
+            // Asignar consultas
+            consultasCreadas.forEach(consulta => {
+                if (consulta.fecha === fecha && !consulta.medico) {
+                    const medicoAsignado = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
+                    if (medicoAsignado) {
+                        if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
+                        consultasAsignadas[fecha].push({...consulta, medico: medicoAsignado});
+                        medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
+                        asignacionesRealizadas++;
                     }
-                });
-            }
+                }
+            });
 
-            // Asignar turnos (incluso en días festivos)
+            // Asignar turnos
             turnosCreados.forEach(turno => {
                 if (turno.fecha === fecha && !turno.medico) {
                     const medicoAsignado = asignarMedicoATurno(turno, medicosDisponibles, fecha);
@@ -256,11 +259,6 @@
             });
 
             return asignacionesRealizadas;
-        }
-
-        function tieneTurnosAsignados(fecha) {
-            return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) || 
-                   (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0);
         }
 
         function obtenerMedicosDisponibles(fecha) {
