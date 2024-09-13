@@ -209,10 +209,6 @@
 
             cargarDatos();
 
-            // Reiniciar asignaciones
-            consultasAsignadas = {};
-            turnosAsignados = {};
-
             const [year, week] = semanaSeleccionada.split('-W');
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
 
@@ -270,7 +266,7 @@
             
             if (consulta.subespecialidad) {
                 medicosAptos = medicosDisponibles.filter(medico => 
-                    subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad)
+                    subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad)
                 );
             }
 
@@ -291,7 +287,7 @@
             
             if (turno.subespecialidad) {
                 medicosAptos = medicosDisponibles.filter(medico => 
-                    subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad)
+                    subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad)
                 );
             }
 
@@ -397,7 +393,7 @@
 
         function obtenerMedicosValidosParaTurno(turno, fecha) {
             return medicos.filter(medico => 
-                subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad) &&
+                (!turno.subespecialidad || (subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad))) &&
                 !haTrabajoNochePrevia(medico.correo, fecha) &&
                 !haTrabajoMuchoReciente(medico.correo, fecha) &&
                 !excedeFinesDeSemana(medico.correo, fecha) &&
