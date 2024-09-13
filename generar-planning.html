@@ -129,6 +129,24 @@
             actualizarCalendario(mesSeleccionado);
         }
 
+        function cargarDatos(mesSeleccionado) {
+            medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+            subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+            
+            medicos.forEach(medico => {
+                calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
+            });
+
+            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
+            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
+            
+            consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${mesSeleccionado}`)) || {};
+            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${mesSeleccionado}`)) || {};
+        }
+
         function generarCalendario(mes) {
             const calendario = document.getElementById('calendario');
             calendario.innerHTML = '';
@@ -186,28 +204,6 @@
             return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
         }
 
-        function cargarDatos(mesSeleccionado) {
-            medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
-            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
-            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
-            subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            
-            medicos.forEach(medico => {
-                calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
-            });
-
-            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
-            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
-            
-            consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${mesSeleccionado}`)) || {};
-            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${mesSeleccionado}`)) || {};
-        }
-
-        function normalizarFecha(fecha) {
-            return new Date(fecha + 'T00:00:00Z').toISOString().split('T')[0];
-        }
-
         function actualizarCalendario(mesSeleccionado) {
             const [year, month] = mesSeleccionado.split('-');
             const primerDia = new Date(year, month - 1, 1);
@@ -222,7 +218,7 @@
                 if (fechaObj >= primerDia && fechaObj <= ultimoDia) {
                     // Mostrar consultas asignadas y creadas
                     const consultasDia = (consultasAsignadas[fecha] || []).concat(
-                        consultasCreadas.filter(c => normalizarFecha(c.fecha) === fecha && !c.medico)
+                        consultasCreadas.filter(c => c.fecha === fecha && !c.medico)
                     );
                     consultasDia.forEach(consulta => {
                         const consultaElement = document.createElement('div');
@@ -237,7 +233,7 @@
 
                     // Mostrar turnos asignados y creados
                     const turnosDia = (turnosAsignados[fecha] || []).concat(
-                        turnosCreados.filter(t => normalizarFecha(t.fecha) === fecha && !t.medico)
+                        turnosCreados.filter(t => t.fecha === fecha && !t.medico)
                     );
                     turnosDia.forEach(turno => {
                         const turnoElement = document.createElement('div');
@@ -290,8 +286,8 @@
         function tieneTurnosOConsultas(fecha) {
             return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) ||
                    (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0) ||
-                   turnosCreados.some(t => normalizarFecha(t.fecha) === fecha) ||
-                   consultasCreadas.some(c => normalizarFecha(c.fecha) === fecha);
+                   turnosCreados.some(t => t.fecha === fecha) ||
+                   consultasCreadas.some(c => c.fecha === fecha);
         }
 
         function asignarConsultasYTurnos(fecha) {
@@ -300,7 +296,7 @@
             
             // Asignar consultas
             consultasCreadas.forEach(consulta => {
-                if (normalizarFecha(consulta.fecha) === fecha && !consulta.medico) {
+                if (consulta.fecha === fecha && !consulta.medico) {
                     const medicoAsignado = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
                     if (medicoAsignado) {
                         if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
@@ -313,7 +309,7 @@
 
             // Asignar turnos
             turnosCreados.forEach(turno => {
-                if (normalizarFecha(turno.fecha) === fecha && !turno.medico) {
+                if (turno.fecha === fecha && !turno.medico) {
                     const medicoAsignado = asignarMedicoATurno(turno, medicosDisponibles, fecha);
                     if (medicoAsignado) {
                         if (!turnosAsignados[fecha]) turnosAsignados[fecha] = [];
@@ -339,7 +335,8 @@
             
             if (consulta.subespecialidad) {
                 medicosAptos = medicosDisponibles.filter(medico => 
-                    subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad)
+                    subespecialidadesMedicos[medico.correo] && 
+                    subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad)
                 );
             }
 
@@ -360,7 +357,8 @@
             
             if (turno.subespecialidad) {
                 medicosAptos = medicosDisponibles.filter(medico => 
-                    subespecialidadesMedicos[medico.correo] && subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad)
+                    subespecialidadesMedicos[medico.correo] && 
+                    subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad)
                 );
             }
 
