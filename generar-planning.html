@@ -360,7 +360,8 @@
                 consultasDia.forEach(consulta => {
                     const consultaElement = document.createElement('div');
                     consultaElement.className = 'asignacion';
-                    consultaElement.textContent = `Consulta: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${consulta.medico || 'Sin asignar'}`;
+                    const nombreMedico = obtenerNombreMedico(consulta.medico);
+                    consultaElement.textContent = `Consulta: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${nombreMedico || 'Sin asignar'}`;
                     if (consulta.subespecialidad) {
                         consultaElement.textContent += ` - ${consulta.subespecialidad}`;
                     }
@@ -372,7 +373,8 @@
                 turnosDia.forEach(turno => {
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'asignacion';
-                    turnoElement.textContent = `Turno: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${turno.medico || 'Sin asignar'}`;
+                    const nombreMedico = obtenerNombreMedico(turno.medico);
+                    turnoElement.textContent = `Turno: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${nombreMedico || 'Sin asignar'}`;
                     if (turno.subespecialidad) {
                         turnoElement.textContent += ` - ${turno.subespecialidad}`;
                         
@@ -389,6 +391,11 @@
                     dia.appendChild(turnoElement);
                 });
             });
+        }
+
+        function obtenerNombreMedico(correoMedico) {
+            const medico = medicos.find(m => m.correo === correoMedico);
+            return medico ? `${medico.nombre} ${medico.apellidos}` : 'Desconocido';
         }
 
         function obtenerMedicosValidosParaTurno(turno, fecha) {
@@ -442,3 +449,4 @@
     </script>
 </body>
 </html>
+
