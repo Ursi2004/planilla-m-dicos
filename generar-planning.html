@@ -222,7 +222,7 @@
                 const fechaStr = fecha.toISOString().split('T')[0];
                 const esDiaFestivo = esFestivo(fechaStr);
                 const asignacionesDelDia = asignarConsultasYTurnos(fechaStr, esDiaFestivo);
-                if (asignacionesDelDia === 0) {
+                if (asignacionesDelDia === 0 && !tieneTurnosAsignados(fechaStr)) {
                     diasSinAsignacion.push(fechaStr);
                 }
             }
@@ -269,6 +269,11 @@
             });
 
             return asignacionesRealizadas;
+        }
+
+        function tieneTurnosAsignados(fecha) {
+            return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) || 
+                   (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0);
         }
 
         function obtenerMedicosDisponibles(fecha) {
