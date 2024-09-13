@@ -180,22 +180,6 @@
             consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
             turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
             
-            // Filtrar consultas y turnos para la semana seleccionada
-            const [year, week] = semanaSeleccionada.split('-W');
-            const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
-            const ultimoDia = new Date(primerDia);
-            ultimoDia.setDate(ultimoDia.getDate() + 6);
-
-            consultasCreadas = consultasCreadas.filter(consulta => {
-                const fechaConsulta = new Date(consulta.fecha);
-                return fechaConsulta >= primerDia && fechaConsulta <= ultimoDia;
-            });
-
-            turnosCreados = turnosCreados.filter(turno => {
-                const fechaTurno = new Date(turno.fecha);
-                return fechaTurno >= primerDia && fechaTurno <= ultimoDia;
-            });
-
             consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaSeleccionada}`)) || {};
             turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
         }
@@ -208,10 +192,6 @@
             }
 
             cargarDatos();
-
-            // Reiniciar asignaciones
-            consultasAsignadas = {};
-            turnosAsignados = {};
 
             const [year, week] = semanaSeleccionada.split('-W');
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
@@ -365,6 +345,9 @@
                     const consultaElement = document.createElement('div');
                     consultaElement.className = 'asignacion';
                     consultaElement.textContent = `Consulta: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${consulta.medico || 'Sin asignar'}`;
+                    if (consulta.subespecialidad) {
+                        consultaElement.textContent += ` - ${consulta.subespecialidad}`;
+                    }
                     dia.appendChild(consultaElement);
                 });
 
@@ -374,9 +357,10 @@
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'asignacion';
                     turnoElement.textContent = `Turno: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${turno.medico || 'Sin asignar'}`;
-                    
-                    // Agregar desplegable para turnos con subespecialidad
                     if (turno.subespecialidad) {
+                        turnoElement.textContent += ` - ${turno.subespecialidad}`;
+                        
+                        // Agregar desplegable para turnos con subespecialidad
                         const selector = document.createElement('select');
                         selector.innerHTML = '<option value="">Cambiar médico</option>';
                         const medicosValidos = obtenerMedicosValidosParaTurno(turno, fecha);
@@ -386,7 +370,6 @@
                         selector.onchange = (e) => modificarAsignacionTurno(fecha, turno.id, e.target.value);
                         turnoElement.appendChild(selector);
                     }
-                    
                     dia.appendChild(turnoElement);
                 });
             });
@@ -443,4 +426,3 @@
     </script>
 </body>
 </html>
-
