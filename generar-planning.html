@@ -145,6 +145,37 @@
             
             consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${mesSeleccionado}`)) || {};
             turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${mesSeleccionado}`)) || {};
+
+            // Asegurarse de que todas las consultas y turnos creados estén incluidos en las asignaciones
+            const [year, month] = mesSeleccionado.split('-');
+            const primerDia = new Date(year, month - 1, 1);
+            const ultimoDia = new Date(year, month, 0);
+
+            consultasCreadas.forEach(consulta => {
+                const fechaConsulta = new Date(consulta.fecha);
+                if (fechaConsulta >= primerDia && fechaConsulta <= ultimoDia) {
+                    const fechaStr = consulta.fecha;
+                    if (!consultasAsignadas[fechaStr]) {
+                        consultasAsignadas[fechaStr] = [];
+                    }
+                    if (!consultasAsignadas[fechaStr].some(c => c.id === consulta.id)) {
+                        consultasAsignadas[fechaStr].push(consulta);
+                    }
+                }
+            });
+
+            turnosCreados.forEach(turno => {
+                const fechaTurno = new Date(turno.fecha);
+                if (fechaTurno >= primerDia && fechaTurno <= ultimoDia) {
+                    const fechaStr = turno.fecha;
+                    if (!turnosAsignados[fechaStr]) {
+                        turnosAsignados[fechaStr] = [];
+                    }
+                    if (!turnosAsignados[fechaStr].some(t => t.id === turno.id)) {
+                        turnosAsignados[fechaStr].push(turno);
+                    }
+                }
+            });
         }
 
         function generarCalendario(mes) {
@@ -216,10 +247,8 @@
 
                 const fechaObj = new Date(fecha);
                 if (fechaObj >= primerDia && fechaObj <= ultimoDia) {
-                    // Mostrar consultas asignadas y creadas
-                    const consultasDia = (consultasAsignadas[fecha] || []).concat(
-                        consultasCreadas.filter(c => c.fecha === fecha && !c.medico)
-                    );
+                    // Mostrar consultas asignadas
+                    const consultasDia = consultasAsignadas[fecha] || [];
                     consultasDia.forEach(consulta => {
                         const consultaElement = document.createElement('div');
                         consultaElement.className = 'asignacion';
@@ -231,10 +260,8 @@
                         dia.appendChild(consultaElement);
                     });
 
-                    // Mostrar turnos asignados y creados
-                    const turnosDia = (turnosAsignados[fecha] || []).concat(
-                        turnosCreados.filter(t => t.fecha === fecha && !t.medico)
-                    );
+                    // Mostrar turnos asignados
+                    const turnosDia = turnosAsignados[fecha] || [];
                     turnosDia.forEach(turno => {
                         const turnoElement = document.createElement('div');
                         turnoElement.className = 'asignacion';
@@ -285,9 +312,7 @@
 
         function tieneTurnosOConsultas(fecha) {
             return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) ||
-                   (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0) ||
-                   turnosCreados.some(t => t.fecha === fecha) ||
-                   consultasCreadas.some(c => c.fecha === fecha);
+                   (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0);
         }
 
         function asignarConsultasYTurnos(fecha) {
@@ -295,12 +320,11 @@
             let asignacionesRealizadas = 0;
             
             // Asignar consultas
-            consultasCreadas.forEach(consulta => {
-                if (consulta.fecha === fecha && !consulta.medico) {
+            (consultasAsignadas[fecha] || []).forEach(consulta => {
+                if (!consulta.medico) {
                     const medicoAsignado = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
                     if (medicoAsignado) {
-                        if (!consultasAsignadas[fecha]) consultasAsignadas[fecha] = [];
-                        consultasAsignadas[fecha].push({...consulta, medico: medicoAsignado});
+                        consulta.medico = medicoAsignado;
                         medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
                         asignacionesRealizadas++;
                     }
@@ -308,12 +332,11 @@
             });
 
             // Asignar turnos
-            turnosCreados.forEach(turno => {
-                if (turno.fecha === fecha && !turno.medico) {
+            (turnosAsignados[fecha] || []).forEach(turno => {
+                if (!turno.medico) {
                     const medicoAsignado = asignarMedicoATurno(turno, medicosDisponibles, fecha);
                     if (medicoAsignado) {
-                        if (!turnosAsignados[fecha]) turnosAsignados[fecha] = [];
-                        turnosAsignados[fecha].push({...turno, medico: medicoAsignado});
+                        turno.medico = medicoAsignado;
                         medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
                         asignacionesRealizadas++;
                     }
