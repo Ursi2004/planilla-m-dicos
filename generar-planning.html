@@ -129,58 +129,95 @@
             actualizarCalendario(mesSeleccionado);
         }
 
-        function cargarDatos(mesSeleccionado) {
-            medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
-            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
-            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
-            subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-            
-            medicos.forEach(medico => {
-                calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
+function cargarDatos(mesSeleccionado) {
+    medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+    festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+    festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+    festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+    subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
+    
+    medicos.forEach(medico => {
+        calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
+    });
+
+    consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
+    turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
+    
+    consultasAsignadas = {};
+    turnosAsignados = {};
+
+    const [year, month] = mesSeleccionado.split('-');
+    const primerDia = new Date(year, month - 1, 1);
+    const ultimoDia = new Date(year, month, 0);
+
+    consultasCreadas.forEach(consulta => {
+        const fechaConsulta = new Date(consulta.fecha);
+        if (fechaConsulta >= primerDia && fechaConsulta <= ultimoDia) {
+            const fechaStr = formatearFecha(consulta.fecha);
+            if (!consultasAsignadas[fechaStr]) {
+                consultasAsignadas[fechaStr] = [];
+            }
+            consultasAsignadas[fechaStr].push(consulta);
+        }
+    });
+
+    turnosCreados.forEach(turno => {
+        const fechaTurno = new Date(turno.fecha);
+        if (fechaTurno >= primerDia && fechaTurno <= ultimoDia) {
+            const fechaStr = formatearFecha(turno.fecha);
+            if (!turnosAsignados[fechaStr]) {
+                turnosAsignados[fechaStr] = [];
+            }
+            turnosAsignados[fechaStr].push(turno);
+        }
+    });
+}
+
+function actualizarCalendario(mesSeleccionado) {
+    const [year, month] = mesSeleccionado.split('-');
+    const primerDia = new Date(year, month - 1, 1);
+    const ultimoDia = new Date(year, month, 0);
+
+    const dias = document.querySelectorAll('.dia-content');
+    dias.forEach((dia) => {
+        const fecha = dia.getAttribute('data-fecha');
+        dia.innerHTML = '';
+
+        const fechaObj = new Date(fecha);
+        if (fechaObj >= primerDia && fechaObj <= ultimoDia) {
+            // Mostrar consultas asignadas
+            const consultasDia = consultasAsignadas[fecha] || [];
+            consultasDia.forEach(consulta => {
+                const consultaElement = document.createElement('div');
+                consultaElement.className = 'asignacion';
+                const nombreMedico = obtenerNombreMedico(consulta.medico);
+                consultaElement.textContent = `C: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${nombreMedico || 'Sin asignar'}`;
+                if (consulta.subespecialidad) {
+                    consultaElement.textContent += ` - ${consulta.subespecialidad}`;
+                }
+                dia.appendChild(consultaElement);
             });
 
-            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
-            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
-            
-            consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${mesSeleccionado}`)) || {};
-            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${mesSeleccionado}`)) || {};
-
-            // Asegurarse de que todas las consultas y turnos creados estén incluidos en las asignaciones
-            const [year, month] = mesSeleccionado.split('-');
-            const primerDia = new Date(year, month - 1, 1);
-            const ultimoDia = new Date(year, month, 0);
-
-            consultasCreadas.forEach(consulta => {
-                const fechaConsulta = new Date(consulta.fecha);
-                if (fechaConsulta >= primerDia && fechaConsulta <= ultimoDia) {
-                    const fechaStr = formatearFecha(consulta.fecha);
-                    if (!consultasAsignadas[fechaStr]) {
-                        consultasAsignadas[fechaStr] = [];
-                    }
-                    if (!consultasAsignadas[fechaStr].some(c => c.id === consulta.id)) {
-                        consultasAsignadas[fechaStr].push(consulta);
-                    }
+            // Mostrar turnos asignados
+            const turnosDia = turnosAsignados[fecha] || [];
+            turnosDia.forEach(turno => {
+                const turnoElement = document.createElement('div');
+                turnoElement.className = 'asignacion';
+                const nombreMedico = obtenerNombreMedico(turno.medico);
+                turnoElement.textContent = `T: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${nombreMedico || 'Sin asignar'}`;
+                if (turno.subespecialidad) {
+                    turnoElement.textContent += ` - ${turno.subespecialidad}`;
                 }
-            });
-
-            turnosCreados.forEach(turno => {
-                const fechaTurno = new Date(turno.fecha);
-                if (fechaTurno >= primerDia && fechaTurno <= ultimoDia) {
-                    const fechaStr = formatearFecha(turno.fecha);
-                    if (!turnosAsignados[fechaStr]) {
-                        turnosAsignados[fechaStr] = [];
-                    }
-                    if (!turnosAsignados[fechaStr].some(t => t.id === turno.id)) {
-                        turnosAsignados[fechaStr].push(turno);
-                    }
-                }
+                dia.appendChild(turnoElement);
             });
         }
+    });
+}
 
-        function formatearFecha(fecha) {
-            return new Date(fecha).toISOString().split('T')[0];
-        }
+function formatearFecha(fecha) {
+    const d = new Date(fecha);
+    return d.toISOString().split('T')[0];
+}
 
         function generarCalendario(mes) {
             const calendario = document.getElementById('calendario');
@@ -237,47 +274,6 @@
 
         function esFestivo(fecha) {
             return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
-        }
-
-        function actualizarCalendario(mesSeleccionado) {
-            const [year, month] = mesSeleccionado.split('-');
-            const primerDia = new Date(year, month - 1, 1);
-            const ultimoDia = new Date(year, month, 0);
-
-            const dias = document.querySelectorAll('.dia-content');
-            dias.forEach((dia) => {
-                const fecha = dia.getAttribute('data-fecha');
-                dia.innerHTML = '';
-
-                const fechaObj = new Date(fecha);
-                if (fechaObj >= primerDia && fechaObj <= ultimoDia) {
-                    // Mostrar consultas asignadas
-                    const consultasDia = consultasAsignadas[fecha] || [];
-                    consultasDia.forEach(consulta => {
-                        const consultaElement = document.createElement('div');
-                        consultaElement.className = 'asignacion';
-                        const nombreMedico = obtenerNombreMedico(consulta.medico);
-                        consultaElement.textContent = `C: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${nombreMedico || 'Sin asignar'}`;
-                        if (consulta.subespecialidad) {
-                            consultaElement.textContent += ` - ${consulta.subespecialidad}`;
-                        }
-                        dia.appendChild(consultaElement);
-                    });
-
-                    // Mostrar turnos asignados
-                    const turnosDia = turnosAsignados[fecha] || [];
-                    turnosDia.forEach(turno => {
-                        const turnoElement = document.createElement('div');
-                        turnoElement.className = 'asignacion';
-                        const nombreMedico = obtenerNombreMedico(turno.medico);
-                        turnoElement.textContent = `T: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${nombreMedico || 'Sin asignar'}`;
-                        if (turno.subespecialidad) {
-                            turnoElement.textContent += ` - ${turno.subespecialidad}`;
-                        }
-                        dia.appendChild(turnoElement);
-                    });
-                }
-            });
         }
 
         function generarPlanning() {
