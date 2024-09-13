@@ -124,7 +124,7 @@
             const mesSeleccionado = document.getElementById('mes').value;
             if (!mesSeleccionado) return;
 
-            cargarDatos();
+            cargarDatos(mesSeleccionado);
             generarCalendario(mesSeleccionado);
             actualizarCalendario();
         }
@@ -186,7 +186,7 @@
             return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
         }
 
-        function cargarDatos() {
+        function cargarDatos(mesSeleccionado) {
             medicos = JSON.parse(localStorage.getItem('medicos')) || [];
             festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
             festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
@@ -197,7 +197,6 @@
                 calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
             });
 
-            const mesSeleccionado = document.getElementById('mes').value;
             consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
             turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
             
@@ -211,8 +210,6 @@
                 alert("Por favor, selecciona un mes antes de generar el planning.");
                 return;
             }
-
-            cargarDatos();
 
             const [year, month] = mesSeleccionado.split('-');
             const primerDia = new Date(year, month - 1, 1);
