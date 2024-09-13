@@ -303,11 +303,6 @@
             const data = ev.dataTransfer.getData("text/plain");
             const turnoElement = document.getElementById(data);
             if (turnoElement) {
-                const dayElement = ev.target.closest('.day');
-                if (dayElement.classList.contains('holiday')) {
-                    alert("No se pueden asignar turnos en días festivos.");
-                    return;
-                }
                 const turno = JSON.parse(turnoElement.getAttribute('data-turno'));
                 const fecha = ev.target.closest('.day-content').getAttribute('data-fecha');
                 if (!turnosAsignados[fecha]) {
@@ -388,39 +383,21 @@
             const fechaInicioSemanaPrevia = getDateOfISOWeek(semanaPreviaWeek, semanaPreviaYear);
             
             const nuevasAsignaciones = {};
-            let turnosNoCopiados = 0;
-
             Object.keys(asignacionesPrevias).forEach(fechaPrevia => {
                 const diferenciaEnDias = (new Date(fechaPrevia) - fechaInicioSemanaPrevia) / (1000 * 60 * 60 * 24);
                 const nuevaFecha = new Date(fechaInicioSemanaActual);
                 nuevaFecha.setDate(nuevaFecha.getDate() + diferenciaEnDias);
                 const nuevaFechaStr = nuevaFecha.toISOString().split('T')[0];
-
-                if (!esFestivo(nuevaFechaStr)) {
-                    nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia].map(turno => ({
-                        ...turno,
-                        asignacionId: Date.now() + Math.random()
-                    }));
-                } else {
-                    turnosNoCopiados += asignacionesPrevias[fechaPrevia].length;
-                }
+                nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia].map(turno => ({
+                    ...turno,
+                    asignacionId: Date.now() + Math.random()
+                }));
             });
 
             turnosAsignados = nuevasAsignaciones;
             actualizarCalendario();
             
-            if (turnosNoCopiados > 0) {
-                alert("Observación: no se ha podido copiar los turnos de los días festivos, dado que por defecto no hay turnos estos días. Si quiere añadir un turno excepcional, añádalo manualmente. Gracias");
-            } else {
-                alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
-            }
-        }
-
-        function esFestivo(fecha) {
-            const festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
-            const festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
-            const festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
-            return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
+            alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
         }
 
         window.onload = function() {
