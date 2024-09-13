@@ -212,11 +212,13 @@
             const [year, week] = semanaSeleccionada.split('-W');
             const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
             const ultimoDiaMes = new Date(year, primerDia.getMonth() + 1, 0);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
 
             let diasSinAsignacion = [];
 
-            // Rellenar todas las semanas del mes pendientes
-            for (let fecha = new Date(primerDia); fecha <= ultimoDiaMes; fecha.setDate(fecha.getDate() + 1)) {
+            // Rellenar los días restantes del mes, incluyendo el día actual
+            for (let fecha = new Date(Math.max(primerDia, hoy)); fecha <= ultimoDiaMes; fecha.setDate(fecha.getDate() + 1)) {
                 const fechaStr = fecha.toISOString().split('T')[0];
                 const esDiaFestivo = esFestivo(fechaStr);
                 const asignacionesDelDia = asignarConsultasYTurnos(fechaStr, esDiaFestivo);
