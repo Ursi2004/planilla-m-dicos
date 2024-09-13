@@ -374,60 +374,43 @@
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'asignacion';
                     turnoElement.textContent = `Turno: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${turno.medico || 'Sin asignar'}`;
+                    
+                    // Agregar desplegable para turnos con subespecialidad
+                    if (turno.subespecialidad) {
+                        const selector = document.createElement('select');
+                        selector.innerHTML = '<option value="">Cambiar médico</option>';
+                        const medicosValidos = obtenerMedicosValidosParaTurno(turno, fecha);
+                        medicosValidos.forEach(medico => {
+                            selector.innerHTML += `<option value="${medico.correo}">${medico.nombre} ${medico.apellidos}</option>`;
+                        });
+                        selector.onchange = (e) => modificarAsignacionTurno(fecha, turno.id, e.target.value);
+                        turnoElement.appendChild(selector);
+                    }
+                    
                     dia.appendChild(turnoElement);
                 });
-
-                // Agregar selector para modificar asignación
-                const selector = document.createElement('select');
-                selector.innerHTML = '<option value="">Modificar asignación</option>';
-                medicos.forEach(medico => {
-                    selector.innerHTML += `<option value="${medico.correo}">${medico.nombre} ${medico.apellidos}</option>`;
-                });
-                selector.onchange = (e) => modificarAsignacion(fecha, e.target.value);
-                dia.appendChild(selector);
             });
         }
 
-        function modificarAsignacion(fecha, nuevoMedico) {
-            if (!nuevoMedico) return;
-
-            const asignacionesDelDia = [...(consultasAsignadas[fecha] || []), ...(turnosAsignados[fecha] || [])];
-            if (asignacionesDelDia.length === 0) {
-                alert("No hay asignaciones para modificar en este día.");
-                return;
-            }
-
-            const asignacionAModificar = asignacionesDelDia[0];
-            
-            if (!puedeSerAsignado({correo: nuevoMedico}, fecha, asignacionAModificar)) {
-                alert("Este médico no puede ser asignado debido a las restricciones existentes.");
-                return;
-            }
-
-            // Modificar la asignación
-            asignacionAModificar.medico = nuevoMedico;
-
-            // Actualizar las asignaciones
-            if (asignacionAModificar.nombre.includes('Consulta')) {
-                consultasAsignadas[fecha] = consultasAsignadas[fecha].map(c => 
-                    c.id === asignacionAModificar.id ? asignacionAModificar : c
-                );
-            } else {
-                turnosAsignados[fecha] = turnosAsignados[fecha].map(t => 
-                    t.id === asignacionAModificar.id ? asignacionAModificar : t
-                );
-            }
-
-            actualizarCalendario();
-            guardarAsignaciones(document.getElementById('semana').value);
+        function obtenerMedicosValidosParaTurno(turno, fecha) {
+            return medicos.filter(medico => 
+                subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad) &&
+                !haTrabajoNochePrevia(medico.correo, fecha) &&
+                !haTrabajoMuchoReciente(medico.correo, fecha) &&
+                !excedeFinesDeSemana(medico.correo, fecha) &&
+                !estaMedicoAsignadoEnFecha(medico.correo, fecha)
+            );
         }
 
-        function puedeSerAsignado(medico, fecha, asignacion) {
-            return !haTrabajoNochePrevia(medico.correo, fecha) &&
-                   !haTrabajoMuchoReciente(medico.correo, fecha) &&
-                   !excedeFinesDeSemana(medico.correo, fecha) &&
-                   !estaMedicoAsignadoEnFecha(medico.correo, fecha) &&
-                   (!asignacion.subespecialidad || subespecialidadesMedicos[medico.correo].includes(asignacion.subespecialidad));
+        function modificarAsignacionTurno(fecha, turnoId, nuevoMedico) {
+            if (!nuevoMedico) return;
+
+            const turno = turnosAsignados[fecha].find(t => t.id === turnoId);
+            if (!turno) return;
+
+            turno.medico = nuevoMedico;
+            actualizarCalendario();
+            guardarAsignaciones(document.getElementById('semana').value);
         }
 
         function estaMedicoAsignadoEnFecha(correoMedico, fecha) {
@@ -460,3 +443,4 @@
     </script>
 </body>
 </html>
+
