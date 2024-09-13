@@ -76,9 +76,6 @@
         .festivo {
             background-color: #ffcccb;
         }
-        .otro-mes {
-            opacity: 0.5;
-        }
         nav {
             margin-top: 20px;
             text-align: center;
@@ -94,14 +91,9 @@
     <div class="container">
         <h1>Generar Planning</h1>
         
-        <div class="form-group">
-            <label for="mes">Seleccionar Mes:</label>
-            <input type="month" id="mes" onchange="mostrarCalendarioMensual()">
-        </div>
-        
-        <button onclick="generarPlanning()">Generar Planning</button>
-        
         <div id="calendario"></div>
+
+        <button onclick="generarPlanning()">Generar Planning</button>
 
         <nav>
             <a href="index.html">Volver al Inicio</a>
@@ -109,124 +101,28 @@
     </div>
 
     <script>
-        let medicos = [];
         let turnosCreados = [];
         let consultasCreadas = [];
-        let turnosAsignados = {};
-        let consultasAsignadas = {};
         let festivosNacionales = {};
         let festivosMadrid = {};
         let festivosManuales = {};
-        let subespecialidadesMedicos = {};
-        let calendarioMedicos = {};
 
-        function mostrarCalendarioMensual() {
-            const mesSeleccionado = document.getElementById('mes').value;
-            if (!mesSeleccionado) return;
-
-            cargarDatos(mesSeleccionado);
-            generarCalendario(mesSeleccionado);
-            actualizarCalendario(mesSeleccionado);
+        function cargarDatos() {
+            turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
+            consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
+            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
         }
 
-function cargarDatos(mesSeleccionado) {
-    medicos = JSON.parse(localStorage.getItem('medicos')) || [];
-    festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
-    festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
-    festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
-    subespecialidadesMedicos = JSON.parse(localStorage.getItem('subespecialidadesMedicos')) || {};
-    
-    medicos.forEach(medico => {
-        calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
-    });
-
-    consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
-    turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
-    
-    consultasAsignadas = {};
-    turnosAsignados = {};
-
-    const [year, month] = mesSeleccionado.split('-');
-    const primerDia = new Date(year, month - 1, 1);
-    const ultimoDia = new Date(year, month, 0);
-
-    consultasCreadas.forEach(consulta => {
-        const fechaConsulta = new Date(consulta.fecha);
-        if (fechaConsulta >= primerDia && fechaConsulta <= ultimoDia) {
-            const fechaStr = formatearFecha(consulta.fecha);
-            if (!consultasAsignadas[fechaStr]) {
-                consultasAsignadas[fechaStr] = [];
-            }
-            consultasAsignadas[fechaStr].push(consulta);
-        }
-    });
-
-    turnosCreados.forEach(turno => {
-        const fechaTurno = new Date(turno.fecha);
-        if (fechaTurno >= primerDia && fechaTurno <= ultimoDia) {
-            const fechaStr = formatearFecha(turno.fecha);
-            if (!turnosAsignados[fechaStr]) {
-                turnosAsignados[fechaStr] = [];
-            }
-            turnosAsignados[fechaStr].push(turno);
-        }
-    });
-}
-
-function actualizarCalendario(mesSeleccionado) {
-    const [year, month] = mesSeleccionado.split('-');
-    const primerDia = new Date(year, month - 1, 1);
-    const ultimoDia = new Date(year, month, 0);
-
-    const dias = document.querySelectorAll('.dia-content');
-    dias.forEach((dia) => {
-        const fecha = dia.getAttribute('data-fecha');
-        dia.innerHTML = '';
-
-        const fechaObj = new Date(fecha);
-        if (fechaObj >= primerDia && fechaObj <= ultimoDia) {
-            // Mostrar consultas asignadas
-            const consultasDia = consultasAsignadas[fecha] || [];
-            consultasDia.forEach(consulta => {
-                const consultaElement = document.createElement('div');
-                consultaElement.className = 'asignacion';
-                const nombreMedico = obtenerNombreMedico(consulta.medico);
-                consultaElement.textContent = `C: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${nombreMedico || 'Sin asignar'}`;
-                if (consulta.subespecialidad) {
-                    consultaElement.textContent += ` - ${consulta.subespecialidad}`;
-                }
-                dia.appendChild(consultaElement);
-            });
-
-            // Mostrar turnos asignados
-            const turnosDia = turnosAsignados[fecha] || [];
-            turnosDia.forEach(turno => {
-                const turnoElement = document.createElement('div');
-                turnoElement.className = 'asignacion';
-                const nombreMedico = obtenerNombreMedico(turno.medico);
-                turnoElement.textContent = `T: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${nombreMedico || 'Sin asignar'}`;
-                if (turno.subespecialidad) {
-                    turnoElement.textContent += ` - ${turno.subespecialidad}`;
-                }
-                dia.appendChild(turnoElement);
-            });
-        }
-    });
-}
-
-function formatearFecha(fecha) {
-    const d = new Date(fecha);
-    return d.toISOString().split('T')[0];
-}
-
-        function generarCalendario(mes) {
+        function generarCalendario() {
             const calendario = document.getElementById('calendario');
             calendario.innerHTML = '';
-            const [year, month] = mes.split('-');
-            const primerDia = new Date(year, month - 1, 1);
-            const ultimoDia = new Date(year, month, 0);
+            const hoy = new Date();
+            const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
             const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            
+
             // Añadir encabezados de días de la semana
             diasSemana.forEach(dia => {
                 const diaHeader = document.createElement('div');
@@ -237,63 +133,60 @@ function formatearFecha(fecha) {
 
             // Rellenar días del mes anterior si es necesario
             for (let i = 0; i < primerDia.getDay(); i++) {
-                const diaAnterior = new Date(year, month - 1, -i);
-                const diaElement = crearElementoDia(diaAnterior, true);
+                const diaElement = document.createElement('div');
+                diaElement.className = 'dia';
                 calendario.appendChild(diaElement);
             }
 
             // Añadir días del mes actual
             for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
-                const fecha = new Date(year, month - 1, dia);
-                const diaElement = crearElementoDia(fecha, false);
-                calendario.appendChild(diaElement);
-            }
-
-            // Rellenar días del mes siguiente si es necesario
-            const diasRestantes = 7 - (ultimoDia.getDay() + 1);
-            for (let i = 1; i <= diasRestantes; i++) {
-                const diaSiguiente = new Date(year, month, i);
-                const diaElement = crearElementoDia(diaSiguiente, true);
+                const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), dia);
+                const diaElement = document.createElement('div');
+                diaElement.className = 'dia';
+                if (esFestivo(fecha)) diaElement.classList.add('festivo');
+                
+                diaElement.innerHTML = `
+                    <div class="dia-header">${dia}</div>
+                    <div class="dia-content" data-fecha="${formatearFecha(fecha)}"></div>
+                `;
                 calendario.appendChild(diaElement);
             }
         }
 
-        function crearElementoDia(fecha, otroMes) {
-            const fechaStr = formatearFecha(fecha);
-            const diaElement = document.createElement('div');
-            diaElement.className = 'dia';
-            if (otroMes) diaElement.classList.add('otro-mes');
-            if (esFestivo(fechaStr)) diaElement.classList.add('festivo');
-            
-            diaElement.innerHTML = `
-                <div class="dia-header">${fecha.getDate()}</div>
-                <div class="dia-content" data-fecha="${fechaStr}"></div>
-            `;
-            return diaElement;
-        }
+        function actualizarCalendario() {
+            const dias = document.querySelectorAll('.dia-content');
+            dias.forEach((dia) => {
+                const fecha = dia.getAttribute('data-fecha');
+                dia.innerHTML = '';
 
-        function esFestivo(fecha) {
-            return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
+                // Mostrar consultas asignadas
+                const consultasDia = consultasCreadas.filter(c => c.fecha === fecha);
+                consultasDia.forEach(consulta => {
+                    const consultaElement = document.createElement('div');
+                    consultaElement.className = 'asignacion';
+                    consultaElement.textContent = `C: ${consulta.nombre} (${consulta.inicio}-${consulta.fin})`;
+                    dia.appendChild(consultaElement);
+                });
+
+                // Mostrar turnos asignados
+                const turnosDia = turnosCreados.filter(t => t.fecha === fecha);
+                turnosDia.forEach(turno => {
+                    const turnoElement = document.createElement('div');
+                    turnoElement.className = 'asignacion';
+                    turnoElement.textContent = `T: ${turno.nombre} (${turno.inicio}-${turno.fin})`;
+                    dia.appendChild(turnoElement);
+                });
+            });
         }
 
         function generarPlanning() {
-            const mesSeleccionado = document.getElementById('mes').value;
-            if (!mesSeleccionado) {
-                alert("Por favor, selecciona un mes antes de generar el planning.");
-                return;
-            }
-
-            const [year, month] = mesSeleccionado.split('-');
-            const primerDia = new Date(year, month - 1, 1);
-            const ultimoDia = new Date(year, month, 0);
             const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
-
+            const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
             let diasSinAsignacion = [];
 
-            for (let fecha = new Date(Math.max(primerDia, hoy)); fecha <= ultimoDia; fecha.setDate(fecha.getDate() + 1)) {
+            for (let fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()); fecha <= ultimoDia; fecha.setDate(fecha.getDate() + 1)) {
                 const fechaStr = formatearFecha(fecha);
-                if (!esFestivo(fechaStr) && !tieneTurnosOConsultas(fechaStr)) {
+                if (!tieneTurnosOConsultas(fechaStr)) {
                     diasSinAsignacion.push(fechaStr);
                 }
             }
@@ -301,32 +194,27 @@ function formatearFecha(fecha) {
             if (diasSinAsignacion.length > 0) {
                 alert(`Los siguientes días necesitan al menos 1 turno o consulta: ${diasSinAsignacion.join(', ')}`);
             } else {
-                actualizarCalendario(mesSeleccionado);
-                guardarAsignaciones(mesSeleccionado);
+                alert("¡Bravo!");
             }
         }
 
         function tieneTurnosOConsultas(fecha) {
-            return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) ||
-                   (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0);
+            return turnosCreados.some(t => t.fecha === fecha) || consultasCreadas.some(c => c.fecha === fecha);
         }
 
-        function obtenerNombreMedico(correoMedico) {
-            const medico = medicos.find(m => m.correo === correoMedico);
-            return medico ? `${medico.nombre} ${medico.apellidos}` : 'Desconocido';
+        function esFestivo(fecha) {
+            const fechaStr = formatearFecha(fecha);
+            return festivosNacionales[fechaStr] || festivosMadrid[fechaStr] || festivosManuales[fechaStr];
         }
 
-        function guardarAsignaciones(mes) {
-            localStorage.setItem(`consultasAsignadas_${mes}`, JSON.stringify(consultasAsignadas));
-            localStorage.setItem(`turnosAsignados_${mes}`, JSON.stringify(turnosAsignados));
-            alert("Asignaciones guardadas correctamente.");
+        function formatearFecha(fecha) {
+            return fecha.toISOString().split('T')[0];
         }
 
         window.onload = function() {
-            const currentDate = new Date();
-            const currentMonth = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
-            document.getElementById('mes').value = currentMonth;
-            mostrarCalendarioMensual();
+            cargarDatos();
+            generarCalendario();
+            actualizarCalendario();
         };
     </script>
 </body>
