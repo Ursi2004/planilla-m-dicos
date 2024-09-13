@@ -23,30 +23,6 @@
             text-align: center;
             color: #333;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
         #calendario {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -75,6 +51,19 @@
         }
         .festivo {
             background-color: #ffcccb;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
         }
         nav {
             margin-top: 20px;
@@ -123,7 +112,6 @@
             const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
             const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
-            // Añadir encabezados de días de la semana
             diasSemana.forEach(dia => {
                 const diaHeader = document.createElement('div');
                 diaHeader.className = 'dia-header';
@@ -131,14 +119,12 @@
                 calendario.appendChild(diaHeader);
             });
 
-            // Rellenar días del mes anterior si es necesario
             for (let i = 0; i < primerDia.getDay(); i++) {
                 const diaElement = document.createElement('div');
                 diaElement.className = 'dia';
                 calendario.appendChild(diaElement);
             }
 
-            // Añadir días del mes actual
             for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
                 const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), dia);
                 const diaElement = document.createElement('div');
@@ -159,7 +145,6 @@
                 const fecha = dia.getAttribute('data-fecha');
                 dia.innerHTML = '';
 
-                // Mostrar consultas asignadas
                 const consultasDia = consultasCreadas.filter(c => formatearFecha(new Date(c.fecha)) === fecha);
                 consultasDia.forEach(consulta => {
                     const consultaElement = document.createElement('div');
@@ -168,7 +153,6 @@
                     dia.appendChild(consultaElement);
                 });
 
-                // Mostrar turnos asignados
                 const turnosDia = turnosCreados.filter(t => formatearFecha(new Date(t.fecha)) === fecha);
                 turnosDia.forEach(turno => {
                     const turnoElement = document.createElement('div');
