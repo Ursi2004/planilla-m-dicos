@@ -394,21 +394,39 @@
             const fechaInicioSemanaPrevia = getDateOfISOWeek(semanaPreviaWeek, semanaPreviaYear);
             
             const nuevasAsignaciones = {};
+            let consultasNoCopiadas = 0;
+
             Object.keys(asignacionesPrevias).forEach(fechaPrevia => {
                 const diferenciaEnDias = (new Date(fechaPrevia) - fechaInicioSemanaPrevia) / (1000 * 60 * 60 * 24);
                 const nuevaFecha = new Date(fechaInicioSemanaActual);
                 nuevaFecha.setDate(nuevaFecha.getDate() + diferenciaEnDias);
                 const nuevaFechaStr = nuevaFecha.toISOString().split('T')[0];
-                nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia].map(consulta => ({
-                    ...consulta,
-                    asignacionId: Date.now() + Math.random()
-                }));
+
+                if (!esFestivo(nuevaFechaStr)) {
+                    nuevasAsignaciones[nuevaFechaStr] = asignacionesPrevias[fechaPrevia].map(consulta => ({
+                        ...consulta,
+                        asignacionId: Date.now() + Math.random()
+                    }));
+                } else {
+                    consultasNoCopiadas += asignacionesPrevias[fechaPrevia].length;
+                }
             });
 
             consultasAsignadas = nuevasAsignaciones;
             actualizarCalendario();
             
-            alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
+            if (consultasNoCopiadas > 0) {
+                alert("Observación: no se ha podido copiar las consultas de los días festivos, dado que por defecto no hay consultas estos días. Si quiere añadir una consulta excepcional, añádala como un nuevo turno. Gracias");
+            } else {
+                alert("Asignaciones de la semana previa copiadas. No olvides guardar los cambios si deseas mantenerlos.");
+            }
+        }
+
+        function esFestivo(fecha) {
+            const festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            const festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            const festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+            return festivosNacionales[fecha] || festivosMadrid[fecha] || festivosManuales[fecha];
         }
 
         function actualizarCalendario() {
