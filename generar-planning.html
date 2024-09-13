@@ -160,7 +160,7 @@
                 dia.innerHTML = '';
 
                 // Mostrar consultas asignadas
-                const consultasDia = consultasCreadas.filter(c => c.fecha === fecha);
+                const consultasDia = consultasCreadas.filter(c => formatearFecha(new Date(c.fecha)) === fecha);
                 consultasDia.forEach(consulta => {
                     const consultaElement = document.createElement('div');
                     consultaElement.className = 'asignacion';
@@ -169,7 +169,7 @@
                 });
 
                 // Mostrar turnos asignados
-                const turnosDia = turnosCreados.filter(t => t.fecha === fecha);
+                const turnosDia = turnosCreados.filter(t => formatearFecha(new Date(t.fecha)) === fecha);
                 turnosDia.forEach(turno => {
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'asignacion';
@@ -186,7 +186,7 @@
 
             for (let fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()); fecha <= ultimoDia; fecha.setDate(fecha.getDate() + 1)) {
                 const fechaStr = formatearFecha(fecha);
-                if (!tieneTurnosOConsultas(fechaStr)) {
+                if (!tieneTurnosOConsultas(fechaStr) && !esFestivo(fecha)) {
                     diasSinAsignacion.push(fechaStr);
                 }
             }
@@ -199,7 +199,8 @@
         }
 
         function tieneTurnosOConsultas(fecha) {
-            return turnosCreados.some(t => t.fecha === fecha) || consultasCreadas.some(c => c.fecha === fecha);
+            return turnosCreados.some(t => formatearFecha(new Date(t.fecha)) === fecha) || 
+                   consultasCreadas.some(c => formatearFecha(new Date(c.fecha)) === fecha);
         }
 
         function esFestivo(fecha) {
