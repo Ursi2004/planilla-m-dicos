@@ -200,8 +200,24 @@
             consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
             turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
             
+            // Cargar asignaciones existentes
             consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${mesSeleccionado}`)) || {};
             turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${mesSeleccionado}`)) || {};
+
+            // Filtrar consultas y turnos para el mes seleccionado
+            const [year, month] = mesSeleccionado.split('-');
+            const primerDia = new Date(year, month - 1, 1);
+            const ultimoDia = new Date(year, month, 0);
+
+            consultasCreadas = consultasCreadas.filter(consulta => {
+                const fechaConsulta = new Date(consulta.fecha);
+                return fechaConsulta >= primerDia && fechaConsulta <= ultimoDia;
+            });
+
+            turnosCreados = turnosCreados.filter(turno => {
+                const fechaTurno = new Date(turno.fecha);
+                return fechaTurno >= primerDia && fechaTurno <= ultimoDia;
+            });
         }
 
         function generarPlanning() {
