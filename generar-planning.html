@@ -65,6 +65,7 @@
         }
         .dia-content {
             min-height: 50px;
+            font-size: 0.8em;
         }
         .asignacion {
             background-color: #e6f3ff;
@@ -74,6 +75,9 @@
         }
         .festivo {
             background-color: #ffcccb;
+        }
+        .otro-mes {
+            opacity: 0.5;
         }
         nav {
             margin-top: 20px;
@@ -91,8 +95,8 @@
         <h1>Generar Planning</h1>
         
         <div class="form-group">
-            <label for="semana">Seleccionar Semana:</label>
-            <input type="week" id="semana" onchange="mostrarCalendarioSemanal()">
+            <label for="mes">Seleccionar Mes:</label>
+            <input type="month" id="mes" onchange="mostrarCalendarioMensual()">
         </div>
         
         <button onclick="generarPlanning()">Generar Planning</button>
@@ -116,49 +120,66 @@
         let subespecialidadesMedicos = {};
         let calendarioMedicos = {};
 
-        function mostrarCalendarioSemanal() {
-            const semanaSeleccionada = document.getElementById('semana').value;
-            if (!semanaSeleccionada) return;
+        function mostrarCalendarioMensual() {
+            const mesSeleccionado = document.getElementById('mes').value;
+            if (!mesSeleccionado) return;
 
             cargarDatos();
-            generarCalendario(semanaSeleccionada);
+            generarCalendario(mesSeleccionado);
             actualizarCalendario();
         }
 
-        function getDateOfISOWeek(week, year) {
-            const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
-            const dayOfWeek = simple.getUTCDay();
-            const ISOweekStart = new Date(simple);
-            if (dayOfWeek <= 4)
-                ISOweekStart.setUTCDate(simple.getUTCDate() - dayOfWeek + 1);
-            else
-                ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - dayOfWeek);
-            return ISOweekStart;
-        }
-
-        function generarCalendario(semana) {
+        function generarCalendario(mes) {
             const calendario = document.getElementById('calendario');
             calendario.innerHTML = '';
-            const [year, week] = semana.split('-W');
-            const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
-            const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            const [year, month] = mes.split('-');
+            const primerDia = new Date(year, month - 1, 1);
+            const ultimoDia = new Date(year, month, 0);
+            const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             
-            diasSemana.forEach((dia, index) => {
-                const fecha = new Date(primerDia);
-                fecha.setUTCDate(fecha.getUTCDate() + index);
-                const fechaStr = fecha.toISOString().split('T')[0];
-                
-                const diaElement = document.createElement('div');
-                diaElement.className = 'dia';
-                if (esFestivo(fechaStr)) {
-                    diaElement.classList.add('festivo');
-                }
-                diaElement.innerHTML = `
-                    <div class="dia-header">${dia}<br>${fecha.toLocaleDateString()}</div>
-                    <div class="dia-content" data-fecha="${fechaStr}"></div>
-                `;
-                calendario.appendChild(diaElement);
+            // Añadir encabezados de días de la semana
+            diasSemana.forEach(dia => {
+                const diaHeader = document.createElement('div');
+                diaHeader.className = 'dia-header';
+                diaHeader.textContent = dia;
+                calendario.appendChild(diaHeader);
             });
+
+            // Rellenar días del mes anterior si es necesario
+            for (let i = 0; i < primerDia.getDay(); i++) {
+                const diaAnterior = new Date(year, month - 1, -i);
+                const diaElement = crearElementoDia(diaAnterior, true);
+                calendario.appendChild(diaElement);
+            }
+
+            // Añadir días del mes actual
+            for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
+                const fecha = new Date(year, month - 1, dia);
+                const diaElement = crearElementoDia(fecha, false);
+                calendario.appendChild(diaElement);
+            }
+
+            // Rellenar días del mes siguiente si es necesario
+            const diasRestantes = 7 - (ultimoDia.getDay() + 1);
+            for (let i = 1; i <= diasRestantes; i++) {
+                const diaSiguiente = new Date(year, month, i);
+                const diaElement = crearElementoDia(diaSiguiente, true);
+                calendario.appendChild(diaElement);
+            }
+        }
+
+        function crearElementoDia(fecha, otroMes) {
+            const fechaStr = fecha.toISOString().split('T')[0];
+            const diaElement = document.createElement('div');
+            diaElement.className = 'dia';
+            if (otroMes) diaElement.classList.add('otro-mes');
+            if (esFestivo(fechaStr)) diaElement.classList.add('festivo');
+            
+            diaElement.innerHTML = `
+                <div class="dia-header">${fecha.getDate()}</div>
+                <div class="dia-content" data-fecha="${fechaStr}"></div>
+            `;
+            return diaElement;
         }
 
         function esFestivo(fecha) {
@@ -176,33 +197,32 @@
                 calendarioMedicos[medico.correo] = JSON.parse(localStorage.getItem(`calendario_${medico.correo}`)) || {};
             });
 
-            const semanaSeleccionada = document.getElementById('semana').value;
+            const mesSeleccionado = document.getElementById('mes').value;
             consultasCreadas = JSON.parse(localStorage.getItem('consultas')) || [];
             turnosCreados = JSON.parse(localStorage.getItem('turnosCreados')) || [];
             
-            consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${semanaSeleccionada}`)) || {};
-            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${semanaSeleccionada}`)) || {};
+            consultasAsignadas = JSON.parse(localStorage.getItem(`consultasAsignadas_${mesSeleccionado}`)) || {};
+            turnosAsignados = JSON.parse(localStorage.getItem(`turnosAsignados_${mesSeleccionado}`)) || {};
         }
 
         function generarPlanning() {
-            const semanaSeleccionada = document.getElementById('semana').value;
-            if (!semanaSeleccionada) {
-                alert("Por favor, selecciona una semana antes de generar el planning.");
+            const mesSeleccionado = document.getElementById('mes').value;
+            if (!mesSeleccionado) {
+                alert("Por favor, selecciona un mes antes de generar el planning.");
                 return;
             }
 
             cargarDatos();
 
-            const [year, week] = semanaSeleccionada.split('-W');
-            const primerDia = getDateOfISOWeek(parseInt(week), parseInt(year));
-            const ultimoDiaMes = new Date(year, primerDia.getMonth() + 1, 0);
+            const [year, month] = mesSeleccionado.split('-');
+            const primerDia = new Date(year, month - 1, 1);
+            const ultimoDia = new Date(year, month, 0);
             const hoy = new Date();
             hoy.setHours(0, 0, 0, 0);
 
             let diasSinAsignacion = [];
 
-            // Rellenar los días restantes del mes, incluyendo el día actual
-            for (let fecha = new Date(Math.max(primerDia, hoy)); fecha <= ultimoDiaMes; fecha.setDate(fecha.getDate() + 1)) {
+            for (let fecha = new Date(Math.max(primerDia, hoy)); fecha <= ultimoDia; fecha.setDate(fecha.getDate() + 1)) {
                 const fechaStr = fecha.toISOString().split('T')[0];
                 if (!esFestivo(fechaStr) && !tieneTurnosOConsultas(fechaStr)) {
                     const asignacionesDelDia = asignarConsultasYTurnos(fechaStr);
@@ -217,15 +237,15 @@
             } else {
                 asignarMedicosASubespecialidades();
                 actualizarCalendario();
-                guardarAsignaciones(semanaSeleccionada);
+                guardarAsignaciones(mesSeleccionado);
             }
         }
 
         function tieneTurnosOConsultas(fecha) {
             return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) ||
                    (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0) ||
-                   (turnosCreados.some(t => t.fecha === fecha)) ||
-                   (consultasCreadas.some(c => c.fecha === fecha));
+                   turnosCreados.some(t => t.fecha === fecha) ||
+                   consultasCreadas.some(c => c.fecha === fecha);
         }
 
         function asignarConsultasYTurnos(fecha) {
@@ -405,7 +425,7 @@
                     const consultaElement = document.createElement('div');
                     consultaElement.className = 'asignacion';
                     const nombreMedico = obtenerNombreMedico(consulta.medico);
-                    consultaElement.textContent = `Consulta: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${nombreMedico || 'Sin asignar'}`;
+                    consultaElement.textContent = `C: ${consulta.nombre} (${consulta.inicio}-${consulta.fin}) - ${nombreMedico || 'Sin asignar'}`;
                     if (consulta.subespecialidad) {
                         consultaElement.textContent += ` - ${consulta.subespecialidad}`;
                     }
@@ -418,7 +438,7 @@
                     const turnoElement = document.createElement('div');
                     turnoElement.className = 'asignacion';
                     const nombreMedico = obtenerNombreMedico(turno.medico);
-                    turnoElement.textContent = `Turno: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${nombreMedico || 'Sin asignar'}`;
+                    turnoElement.textContent = `T: ${turno.nombre} (${turno.inicio}-${turno.fin}) - ${nombreMedico || 'Sin asignar'}`;
                     if (turno.subespecialidad) {
                         turnoElement.textContent += ` - ${turno.subespecialidad}`;
                     }
@@ -432,26 +452,18 @@
             return medico ? `${medico.nombre} ${medico.apellidos}` : 'Desconocido';
         }
 
-        function guardarAsignaciones(semana) {
-            localStorage.setItem(`consultasAsignadas_${semana}`, JSON.stringify(consultasAsignadas));
-            localStorage.setItem(`turnosAsignados_${semana}`, JSON.stringify(turnosAsignados));
+        function guardarAsignaciones(mes) {
+            localStorage.setItem(`consultasAsignadas_${mes}`, JSON.stringify(consultasAsignadas));
+            localStorage.setItem(`turnosAsignados_${mes}`, JSON.stringify(turnosAsignados));
             alert("Asignaciones guardadas correctamente.");
         }
 
         window.onload = function() {
             const currentDate = new Date();
-            const currentWeek = getWeekNumber(currentDate);
-            document.getElementById('semana').value = `${currentDate.getFullYear()}-W${currentWeek.toString().padStart(2, '0')}`;
-            mostrarCalendarioSemanal();
+            const currentMonth = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            document.getElementById('mes').value = currentMonth;
+            mostrarCalendarioMensual();
         };
-
-        function getWeekNumber(d) {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-            var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-            return weekNo;
-        }
     </script>
 </body>
 </html>
