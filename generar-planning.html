@@ -1,4 +1,4 @@
-ç<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -154,7 +154,7 @@
             consultasCreadas.forEach(consulta => {
                 const fechaConsulta = new Date(consulta.fecha);
                 if (fechaConsulta >= primerDia && fechaConsulta <= ultimoDia) {
-                    const fechaStr = consulta.fecha;
+                    const fechaStr = formatearFecha(consulta.fecha);
                     if (!consultasAsignadas[fechaStr]) {
                         consultasAsignadas[fechaStr] = [];
                     }
@@ -167,7 +167,7 @@
             turnosCreados.forEach(turno => {
                 const fechaTurno = new Date(turno.fecha);
                 if (fechaTurno >= primerDia && fechaTurno <= ultimoDia) {
-                    const fechaStr = turno.fecha;
+                    const fechaStr = formatearFecha(turno.fecha);
                     if (!turnosAsignados[fechaStr]) {
                         turnosAsignados[fechaStr] = [];
                     }
@@ -176,6 +176,10 @@
                     }
                 }
             });
+        }
+
+        function formatearFecha(fecha) {
+            return new Date(fecha).toISOString().split('T')[0];
         }
 
         function generarCalendario(mes) {
@@ -218,7 +222,7 @@
         }
 
         function crearElementoDia(fecha, otroMes) {
-            const fechaStr = fecha.toISOString().split('T')[0];
+            const fechaStr = formatearFecha(fecha);
             const diaElement = document.createElement('div');
             diaElement.className = 'dia';
             if (otroMes) diaElement.classList.add('otro-mes');
@@ -292,19 +296,15 @@
             let diasSinAsignacion = [];
 
             for (let fecha = new Date(Math.max(primerDia, hoy)); fecha <= ultimoDia; fecha.setDate(fecha.getDate() + 1)) {
-                const fechaStr = fecha.toISOString().split('T')[0];
+                const fechaStr = formatearFecha(fecha);
                 if (!esFestivo(fechaStr) && !tieneTurnosOConsultas(fechaStr)) {
-                    const asignacionesDelDia = asignarConsultasYTurnos(fechaStr);
-                    if (asignacionesDelDia === 0) {
-                        diasSinAsignacion.push(fechaStr);
-                    }
+                    diasSinAsignacion.push(fechaStr);
                 }
             }
 
             if (diasSinAsignacion.length > 0) {
-                alert(`Los siguientes días necesitan al menos 1 turno: ${diasSinAsignacion.join(', ')}`);
+                alert(`Los siguientes días necesitan al menos 1 turno o consulta: ${diasSinAsignacion.join(', ')}`);
             } else {
-                asignarMedicosASubespecialidades();
                 actualizarCalendario(mesSeleccionado);
                 guardarAsignaciones(mesSeleccionado);
             }
@@ -313,171 +313,6 @@
         function tieneTurnosOConsultas(fecha) {
             return (turnosAsignados[fecha] && turnosAsignados[fecha].length > 0) ||
                    (consultasAsignadas[fecha] && consultasAsignadas[fecha].length > 0);
-        }
-
-        function asignarConsultasYTurnos(fecha) {
-            let medicosDisponibles = obtenerMedicosDisponibles(fecha);
-            let asignacionesRealizadas = 0;
-            
-            // Asignar consultas
-            (consultasAsignadas[fecha] || []).forEach(consulta => {
-                if (!consulta.medico) {
-                    const medicoAsignado = asignarMedicoAConsulta(consulta, medicosDisponibles, fecha);
-                    if (medicoAsignado) {
-                        consulta.medico = medicoAsignado;
-                        medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
-                        asignacionesRealizadas++;
-                    }
-                }
-            });
-
-            // Asignar turnos
-            (turnosAsignados[fecha] || []).forEach(turno => {
-                if (!turno.medico) {
-                    const medicoAsignado = asignarMedicoATurno(turno, medicosDisponibles, fecha);
-                    if (medicoAsignado) {
-                        turno.medico = medicoAsignado;
-                        medicosDisponibles = medicosDisponibles.filter(m => m.correo !== medicoAsignado);
-                        asignacionesRealizadas++;
-                    }
-                }
-            });
-
-            return asignacionesRealizadas;
-        }
-
-        function obtenerMedicosDisponibles(fecha) {
-            return medicos.filter(medico => {
-                const calendarioMedico = calendarioMedicos[medico.correo];
-                return !calendarioMedico[fecha] || calendarioMedico[fecha] !== 'rojo';
-            });
-        }
-
-        function asignarMedicoAConsulta(consulta, medicosDisponibles, fecha) {
-            let medicosAptos = medicosDisponibles;
-            
-            if (consulta.subespecialidad) {
-                medicosAptos = medicosDisponibles.filter(medico => 
-                    subespecialidadesMedicos[medico.correo] && 
-                    subespecialidadesMedicos[medico.correo].includes(consulta.subespecialidad)
-                );
-            }
-
-            medicosAptos = medicosAptos.filter(medico => 
-                !haTrabajoNochePrevia(medico.correo, fecha) &&
-                !haTrabajoMuchoReciente(medico.correo, fecha)
-            );
-
-            if (medicosAptos.length > 0) {
-                return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
-            }
-
-            return null;
-        }
-
-        function asignarMedicoATurno(turno, medicosDisponibles, fecha) {
-            let medicosAptos = medicosDisponibles;
-            
-            if (turno.subespecialidad) {
-                medicosAptos = medicosDisponibles.filter(medico => 
-                    subespecialidadesMedicos[medico.correo] && 
-                    subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad)
-                );
-            }
-
-            medicosAptos = medicosAptos.filter(medico => 
-                !haTrabajoNochePrevia(medico.correo, fecha) &&
-                !haTrabajoMuchoReciente(medico.correo, fecha) &&
-                !excedeFinesDeSemana(medico.correo, fecha)
-            );
-
-            if (medicosAptos.length > 0) {
-                return medicosAptos[Math.floor(Math.random() * medicosAptos.length)].correo;
-            }
-
-            return null;
-        }
-
-        function haTrabajoNochePrevia(correoMedico, fecha) {
-            const fechaPrevia = new Date(fecha);
-            fechaPrevia.setDate(fechaPrevia.getDate() - 1);
-            const fechaPreviaStr = fechaPrevia.toISOString().split('T')[0];
-
-            const turnosPrevios = turnosAsignados[fechaPreviaStr] || [];
-            return turnosPrevios.some(turno => 
-                turno.medico === correoMedico &&
-                (turno.inicio >= '00:00' && turno.fin <= '07:00')
-            );
-        }
-
-        function haTrabajoMuchoReciente(correoMedico, fecha) {
-            const fechaPrevia = new Date(fecha);
-            fechaPrevia.setDate(fechaPrevia.getDate() - 1);
-            const fechaPreviaStr = fechaPrevia.toISOString().split('T')[0];
-
-            const turnosPrevios = turnosAsignados[fechaPreviaStr] || [];
-            return turnosPrevios.some(turno => 
-                turno.medico === correoMedico &&
-                turno.fin === '24:00'
-            );
-        }
-
-        function excedeFinesDeSemana(correoMedico, fecha) {
-            const dia = new Date(fecha).getDay();
-            if (dia !== 0 && dia !== 6) return false;
-
-            const mesActual = new Date(fecha).getMonth();
-            let finesDeSemanaTrabajados = 0;
-
-            Object.keys(turnosAsignados).forEach(fechaAsignada => {
-                const fechaAsignadaObj = new Date(fechaAsignada);
-                if (fechaAsignadaObj.getMonth() === mesActual) {
-                    const diaAsignado = fechaAsignadaObj.getDay();
-                    if ((diaAsignado === 0 || diaAsignado === 6) && 
-                        turnosAsignados[fechaAsignada].some(turno => turno.medico === correoMedico)) {
-                        finesDeSemanaTrabajados++;
-                    }
-                }
-            });
-
-            return finesDeSemanaTrabajados >= 2;
-        }
-
-        function asignarMedicosASubespecialidades() {
-            const contadorAsignaciones = {};
-            medicos.forEach(medico => {
-                contadorAsignaciones[medico.correo] = 0;
-            });
-
-            Object.keys(turnosAsignados).forEach(fecha => {
-                turnosAsignados[fecha].forEach(turno => {
-                    if (turno.subespecialidad && !turno.medico) {
-                        const medicosAptos = medicos.filter(medico => 
-                            subespecialidadesMedicos[medico.correo] && 
-                            subespecialidadesMedicos[medico.correo].includes(turno.subespecialidad)
-                        );
-                        if (medicosAptos.length > 0) {
-                            const medicoAsignado = medicosAptos.reduce((a, b) => 
-                                contadorAsignaciones[a.correo] <= contadorAsignaciones[b.correo] ? a : b
-                            );
-                            turno.medico = medicoAsignado.correo;
-                            contadorAsignaciones[medicoAsignado.correo]++;
-                        }
-                    } else if (!turno.subespecialidad && !turno.medico) {
-                        const medicosPediatriaGeneral = medicos.filter(medico => 
-                            subespecialidadesMedicos[medico.correo] && 
-                            subespecialidadesMedicos[medico.correo].includes('Pediatría General')
-                        );
-                        if (medicosPediatriaGeneral.length > 0) {
-                            const medicoAsignado = medicosPediatriaGeneral.reduce((a, b) => 
-                                contadorAsignaciones[a.correo] <= contadorAsignaciones[b.correo] ? a : b
-                            );
-                            turno.medico = medicoAsignado.correo;
-                            contadorAsignaciones[medicoAsignado.correo]++;
-                        }
-                    }
-                });
-            });
         }
 
         function obtenerNombreMedico(correoMedico) {
