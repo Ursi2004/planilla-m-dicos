@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Festivos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .month {
+            background-color: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .month-header {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #4CAF50;
+        }
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .day {
+            border: 1px solid #ddd;
+            padding: 5px;
+            text-align: center;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8em;
+        }
+        .day-header {
+            font-weight: bold;
+            background-color: #4CAF50;
+            color: white;
+        }
+        .festivo-nacional {
+            background-color: #ffcccc;
+        }
+        .festivo-madrid {
+            background-color: #ffffcc;
+        }
+        .festivo-manual {
+            background-color: #ccffcc;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        nav {
+            background-color: #333;
+            padding: 10px 0;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+        nav ul li {
+            margin: 0 10px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        .year-selector {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .motivo {
+            font-size: 0.7em;
+            color: #666;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="festivos.html">Festivos</a></li>
+            <li><a href="subespecialidades.html">Subespecialidades</a></li>
+            <li><a href="calendario-consultas.html">Calendario de Consultas</a></li>
+            <li><a href="turnos.html">Turnos</a></li>
+            <li><a href="generar-planning.html">Generar Planning</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h2>Calendario de Festivos</h2>
+        <div class="year-selector">
+            <button class="btn" onclick="cambiarAnio(-1)">&#9664;</button>
+            <span id="anioActual"></span>
+            <button class="btn" onclick="cambiarAnio(1)">&#9654;</button>
+        </div>
+        <button id="agregarFestivo" class="btn">Agregar Festivo</button>
+        <button id="actualizarFestivos" class="btn">Actualizar Festivos</button>
+        <div id="calendario" class="calendar"></div>
+    </div>
+
+    <div id="warningModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Advertencia</h3>
+            <p id="warningMessage"></p>
+            <button onclick="confirmarAgregarFestivo()" class="btn">Agregar de todos modos</button>
+            <button onclick="cancelarAgregarFestivo()" class="btn" style="background-color: #f44336;">Cancelar</button>
+        </div>
+    </div>
+
+    <script src="shared.js"></script>
+    <script>
+        const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        let anioActual = new Date().getFullYear();
+        let festivosNacionales = {};
+        let festivosMadrid = {};
+        let festivosManuales = {};
+        let festivosPendientes = {};
+
+        const warningModal = document.getElementById('warningModal');
+        const warningMessage = document.getElementById('warningMessage');
+        const closeWarning = document.getElementsByClassName("close")[0];
+
+        async function obtenerFestivos(anio) {
+            try {
+                const respuestaNacional = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${anio}/ES`);
+                if (!respuestaNacional.ok) {
+                    throw new Error(`HTTP error! status: ${respuestaNacional.status}`);
+                }
+                const datosNacional = await respuestaNacional.json();
+
+                const respuestaMadrid = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${anio}/ES`);
+                if (!respuestaMadrid.ok) {
+                    throw new Error(`HTTP error! status: ${respuestaMadrid.status}`);
+                }
+                const datosMadrid = await respuestaMadrid.json();
+
+                festivosNacionales[anio] = {};
+                festivosMadrid[anio] = {};
+
+                datosNacional.forEach(festivo => {
+                    festivosNacionales[anio][festivo.date] = festivo.localName;
+                });
+
+                datosMadrid.forEach(festivo => {
+                    if (festivo.counties && festivo.counties.includes('ES-MD')) {
+                        festivosMadrid[anio][festivo.date] = festivo.localName;
+                    }
+                });
+
+                guardarFestivos();
+                generarCalendario();
+                window.dispatchEvent(new Event('festivosActualizados'));
+            } catch (error) {
+                console.error('Error al obtener los festivos de Nager.Date:', error);
+                alert('No se pudieron obtener los festivos automáticamente. Por favor, agrega los festivos manualmente.');
+            }
+        }
+
+        function guardarFestivos() {
+            localStorage.setItem('festivosNacionales', JSON.stringify(festivosNacionales));
+            localStorage.setItem('festivosMadrid', JSON.stringify(festivosMadrid));
+            localStorage.setItem('festivosManuales', JSON.stringify(festivosManuales));
+            window.dispatchEvent(new Event('festivosActualizados'));
+        }
+
+        function cargarFestivos() {
+            festivosNacionales = JSON.parse(localStorage.getItem('festivosNacionales')) || {};
+            festivosMadrid = JSON.parse(localStorage.getItem('festivosMadrid')) || {};
+            festivosManuales = JSON.parse(localStorage.getItem('festivosManuales')) || {};
+        }
+
+        function generarCalendario() {
+            const calendario = document.getElementById('calendario');
+            calendario.innerHTML = '';
+
+            for (let mes = 0; mes < 12; mes++) {
+                const mesElement = document.createElement('div');
+                mesElement.className = 'month';
+                mesElement.innerHTML = `<h3 class="month-header">${meses[mes]}</h3>`;
+
+                const tabla = document.createElement('div');
+                tabla.className = 'days';
+
+                for (let i = 0; i < 7; i++) {
+                    const celda = document.createElement('div');
+                    celda.textContent = diasSemana[i];
+                    celda.className = 'day day-header';
+                    tabla.appendChild(celda);
+                }
+
+                const primerDia = new Date(anioActual, mes, 1).getDay();
+                const diasEnMes = new Date(anioActual, mes + 1, 0).getDate();
+
+                for (let i = 0; i < (primerDia + 6) % 7; i++) {
+                    const celda = document.createElement('div');
+                    celda.className = 'day';
+                    tabla.appendChild(celda);
+                }
+
+                for (let dia = 1; dia <= diasEnMes; dia++) {
+                    const celda = document.createElement('div');
+                    celda.className = 'day';
+
+                    const fecha = `${anioActual}-${(mes + 1).toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+
+                    let contenido = `<span>${dia}</span>`;
+                    let motivo = '';
+
+                    if (festivosNacionales[anioActual] && festivosNacionales[anioActual][fecha]) {
+                        celda.classList.add('festivo-nacional');
+                        motivo = festivosNacionales[anioActual][fecha];
+                    } else if (festivosMadrid[anioActual] && festivosMadrid[anioActual][fecha]) {
+                        celda.classList.add('festivo-madrid');
+                        motivo = festivosMadrid[anioActual][fecha];
+                    } else if (festivosManuales[anioActual] && festivosManuales[anioActual][fecha]) {
+                        celda.classList.add('festivo-manual');
+                        motivo = 'Festivo manual';
+                    }
+
+                    if (motivo) {
+                        contenido += `<span class="motivo">${motivo}</span>`;
+                    }
+
+                    celda.innerHTML = contenido;
+                    celda.addEventListener('click', () => toggleFestivo(fecha));
+                    tabla.appendChild(celda);
+                }
+
+                mesElement.appendChild(tabla);
+                calendario.appendChild(mesElement);
+            }
+        }
+
+        function toggleFestivo(fecha) {
+            const [year, month, day] = fecha.split('-');
+            if (!festivosManuales[year]) {
+                festivosManuales[year] = {};
+            }
+
+            if (festivosManuales[year][fecha]) {
+                delete festivosManuales[year][fecha];
+                guardarFestivos();
+                generarCalendario();
+            } else {
+                festivosPendientes[fecha] = true;
+                mostrarAdvertencia(fecha);
+            }
+        }
+
+        function mostrarAdvertencia(fecha) {
+            const [year, month, day] = fecha.split('-');
+            const fechaFormateada = `${day}/${month}/${year}`;
+            warningMessage.textContent = `¿Estás seguro de que quieres agregar el ${fechaFormateada} como festivo? Esto podría afectar a los turnos y consultas ya programados.`;
+            warningModal.style.display = "block";
+        }
+
+        function confirmarAgregarFestivo() {
+            const consultasAsignadas = JSON.parse(localStorage.getItem('consultasAsignadas')) || {};
+            const consultasEliminadas = JSON.parse(localStorage.getItem('consultasEliminadas')) || [];
+
+            Object.keys(festivosPendientes).forEach(fecha => {
+                const [year, month, day] = fecha.split('-');
+                if (!festivosManuales[year]) {
+                    festivosManuales[year] = {};
+                }
+                festivosManuales[year][fecha] = 'Festivo manual';
+
+                if (consultasAsignadas[fecha]) {
+                    consultasEliminadas.push({
+                        fecha: fecha,
+                        motivo: 'Nuevo día festivo añadido',
+                        consultas: consultasAsignadas[fecha].map(consulta => ({
+                            ...consulta,
+                            fechaEliminacion: new Date().toISOString(),
+                            nombreMedico: obtenerNombreMedico(consulta.medicoId)
+                        }))
+                    });
+                    delete consultasAsignadas[fecha];
+                }
+            });
+
+            localStorage.setItem('consultasAsignadas', JSON.stringify(consultasAsignadas));
+            localStorage.setItem('consultasEliminadas', JSON.stringify(consultasEliminadas));
+            localStorage.setItem('hayNuevasEliminaciones', 'true');
+            guardarFestivos();
+
+            festivosPendientes = {};
+            generarCalendario();
+            warningModal.style.display = "none";
+            window.dispatchEvent(new Event('festivosActualizados'));
+        }
+
+        function cancelarAgregarFestivo() {
+            festivosPendientes = {};
+            warningModal.style.display = "none";
+        }
+
+        closeWarning.onclick = function() {
+            warningModal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == warningModal) {
+                warningModal.style.display = "none";
+            }
+        }
+
+        function cambiarAnio(incremento) {
+            anioActual += incremento;
+            document.getElementById('anioActual').textContent = anioActual;
+            obtenerFestivos(anioActual);
+        }
+
+        function obtenerNombreMedico(medicoId) {
+            const medicos = JSON.parse(localStorage.getItem('medicos')) || [];
+            const medico = medicos.find(m => m.correo === medicoId);
+            return medico ? `${medico.nombre} ${medico.apellidos}` : 'Médico no encontrado';
+        }
+
+        document.getElementById('actualizarFestivos').addEventListener('click', () => {
+            obtenerFestivos(anioActual);
+        });
+
+        window.onload = function() {
+            cargarFestivos();
+            document.getElementById('anioActual').textContent = anioActual;
+            obtenerFestivos(anioActual);
+        };
+    </script>
+</body>
+</html>
