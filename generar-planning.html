@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Planning</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        nav {
+            background-color: #333;
+            padding: 10px 0;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+        nav ul li {
+            margin: 0 10px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .calendar-header {
+            font-weight: bold;
+            text-align: center;
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px;
+        }
+        .calendar-day {
+            border: 1px solid #ddd;
+            padding: 5px;
+            min-height: 100px;
+            background-color: white;
+        }
+        .calendar-day.weekend {
+            background-color: #f0f0f0;
+        }
+        .calendar-day.holiday {
+            background-color: #ffcccb;
+        }
+        .shift {
+            margin: 2px 0;
+            padding: 2px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        .shift.morning {
+            background-color: #90EE90;
+        }
+        .shift.afternoon {
+            background-color: #ADD8E6;
+        }
+        .shift.night {
+            background-color: #D8BFD8;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #doctorSummary {
+            margin-top: 20px;
+        }
+        .doctor-hours {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .warning {
+            color: #ff0000;
+            font-weight: bold;
+        }
+    </style>
+    <script src="calendar-utils.js"></script>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">Inicio</a></li>
+            <li><a href="festivos.html">Festivos</a></li>
+            <li><a href="subespecialidades.html">Subespecialidades</a></li>
+            <li><a href="calendario-consultas.html">Calendario de Consultas</a></li>
+            <li><a href="turnos.html">Turnos</a></li>
+            <li><a href="generar-planning.html">Generar Planning</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <h2>Generar Planning</h2>
+        <div class="form-group">
+            <label for="month">Mes:</label>
+            <select id="month"></select>
+        </div>
+        <div class="form-group">
+            <label for="year">Año:</label>
+            <select id="year"></select>
+        </div>
+        <button id="generatePlanning" class="btn">Haz magia</button>
+        <div class="form-group">
+            <input type="checkbox" id="respetarSaliente" name="respetarSaliente">
+            <label for="respetarSaliente">Respetar saliente de los sábados</label>
+        </div>
+        <button id="planificarPuentes" class="btn">Planificar puentes</button>
+        <div id="calendar" class="calendar"></div>
+        <div id="doctorSummary"></div>
+        </div>
+
+    <div id="warningModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Advertencia</h3>
+            <p id="warningMessage"></p>
+            <button id="confirmGeneration" class="btn">Generar de todos modos</button>
+            <button id="cancelGeneration" class="btn" style="background-color: #f44336;">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('storage', function(event) {
+         if (event.key === 'medicos' || event.key === 'turnosAsignados' || event.key === 'consultasAsignadas') {
+             loadData();
+             displayPlanning(parseInt(monthSelect.value), parseInt(yearSelect.value));
+         }
+        });
+
+        // Add event listeners for custom events
+        window.addEventListener('medicosActualizados', function() {
+         loadData();
+         displayPlanning(parseInt(monthSelect.value), parseInt(yearSelect.value));
+        });
+
+        window.addEventListener('turnosAsignados', function() {
+         loadData();
+         displayPlanning(parseInt(monthSelect.value), parseInt(yearSelect.value));
+        });
+
+        window.addEventListener('consultasAsignadas', function() {
+         loadData();
+         displayPlanning(parseInt(monthSelect.value), parseInt(yearSelect.value));
+        });
+        const monthSelect = document.getElementById('month');
+        const yearSelect = document.getElementById('year');
+        const generateButton = document.getElementById('generatePlanning');
+        const calendarDiv = document.getElementById('calendar');
+        const doctorSummaryDiv = document.getElementById('doctorSummary');
+        const warningModal = document.getElementById('warningModal');
+        const warningMessage = document.getElementById('warningMessage');
+        const confirmGenerationBtn = document.getElementById('confirmGeneration');
+        const cancelGenerationBtn = document.getElementById('cancelGeneration');
+
+        let doctors = [];
+        let shifts = [];
+        let consultations = [];
+        let holidays = {};
+        let planning = {};
+
+        function initializePage() {
+            populateMonthSelect();
+            populateYearSelect();
+            loadData();
+            generateButton.addEventListener('click', generatePlanning);
+        }
+
+        function populateMonthSelect() {
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            months.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+            monthSelect.value = new Date().getMonth();
+        }
+
+        function populateYearSelect() {
+            const currentYear = new Date().getFullYear();
+            for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            yearSelect.value = currentYear;
+        }
+
+        function loadData() {
+            doctors = JSON.parse(localStorage.getItem('medicos')) || [];
+            shifts = JSON.parse(localStorage.getItem('turnosCreados')) || [];
+            consultations = JSON.parse(localStorage.getItem('consultas')) || [];
+            holidays = {
+                ...JSON.parse(localStorage.getItem('festivosNacionales')) || {},
+                ...JSON.parse(localStorage.getItem('festivosMadrid')) || {},
+                ...JSON.parse(localStorage.getItem('festivosManuales')) || {}
+            };
+        }
+
+        function generatePlanning() {
+            const month = parseInt(monthSelect.value);
+            const year = parseInt(yearSelect.value);
+            const respetarSaliente = document.getElementById('respetarSaliente').checked;
+            planning = {};
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateString = formatDate(date);
+                planning[dateString] = [];
+
+                assignShifts(dateString, respetarSaliente);
+            }
+
+            displayPlanning(month, year);
+            displayDoctorSummary(month, year);
+            localStorage.setItem('planningGenerado', JSON.stringify(planning));
+             window.dispatchEvent(new CustomEvent('planningGenerado'));
+        }
+
+        function assignShifts(date, respetarSaliente) {
+            const shiftsForDay = getShiftsForDay(date);
+            const eligibleDoctors = getEligibleDoctors(date, shiftsForDay);
+
+            shiftsForDay.forEach(shift => {
+                const selectedDoctor = selectDoctor(eligibleDoctors, date, shift, respetarSaliente);
+                if (selectedDoctor) {
+                    planning[date].push({...shift, doctor: selectedDoctor});
+                } else {
+                    planning[date].push({...shift, doctor: null});
+                }
+            });
+        }
+
+        function assignConsultations(date) {
+            consultations.forEach(consultation => {
+                const eligibleDoctors = getEligibleDoctors(date, consultation);
+                if (eligibleDoctors.length > 0) {
+                    const selectedDoctor = selectDoctor(eligibleDoctors, date);
+                    planning[date].push({...consultation, doctor: selectedDoctor});
+                } else {
+                    planning[date].push({...consultation, doctor: null});
+                }
+            });
+        }
+
+        function getEligibleDoctors(date, shifts) {
+            return doctors.filter(doctor => {
+                const preferences = JSON.parse(localStorage.getItem(`calendario_${doctor.correo}`)) || {};
+                const isAvailable = preferences[date] !== 'rojo';
+                const hasRequiredSubspecialty = shifts.every(shift => 
+                    !shift.subespecialidad || 
+                    (doctor.subespecialidades && doctor.subespecialidades.includes(shift.subespecialidad))
+                );
+                const canWork = canDoctorWork(doctor, date, shifts);
+                return isAvailable && hasRequiredSubspecialty && canWork;
+            });
+        }
+
+        function canDoctorWork(doctor, date, assignment) {
+            const previousDay = new Date(date);
+            previousDay.setDate(previousDay.getDate() - 1);
+            const previousDayString = formatDate(previousDay);
+            const nextDay = new Date(date);
+            nextDay.setDate(nextDay.getDate() + 1);
+            const nextDayString = formatDate(nextDay);
+
+            // Check if doctor worked 24 hours the previous day
+            if (planning[previousDayString] && planning[previousDayString].some(a => a.doctor === doctor.correo && isFullDayShift(a))) {
+                return false;
+            }
+
+            // Check if doctor worked night shift and this is a morning shift
+            if (planning[previousDayString] && planning[previousDayString].some(a => a.doctor === doctor.correo && isNightShift(a)) &&
+                isMorningShift(assignment)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function selectDoctor(eligibleDoctors, date) {
+            // Implement logic to select the most appropriate doctor
+            // Consider workload balance, preferences, etc.
+            return eligibleDoctors[0].correo; // Simplified for this example
+        }
+
+        function displayPlanning(month, year) {
+            calendarDiv.innerHTML = '';
+            const daysOfWeek = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            
+            daysOfWeek.forEach(day => {
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'calendar-header';
+                dayHeader.textContent = day;
+                calendarDiv.appendChild(dayHeader);
+            });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                calendarDiv.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateString = formatDate(date);
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+                if (isWeekend(date)) dayDiv.classList.add('weekend');
+                if (isHoliday(dateString)) dayDiv.classList.add('holiday');
+
+                dayDiv.innerHTML = `<strong>${day}</strong>`;
+
+                if (planning[dateString]) {
+                    planning[dateString].forEach(assignment => {
+                        const assignmentDiv = document.createElement('div');
+                        assignmentDiv.className = `shift ${getShiftClass(assignment)}`;
+                        assignmentDiv.textContent = `${assignment.nombre}: ${assignment.doctor || 'Sin asignar'}`;
+                        dayDiv.appendChild(assignmentDiv);
+                    });
+                }
+
+                calendarDiv.appendChild(dayDiv);
+            }
+        }
+
+        function displayDoctorSummary(month, year) {
+            doctorSummaryDiv.innerHTML = '<h3>Resumen de Horas por Médico</h3>';
+            const doctorHours = calculateDoctorHours(month, year);
+
+            doctors.forEach(doctor => {
+                const hours = doctorHours[doctor.correo] || 0;
+                const requiredHours = calculateRequiredHours(doctor, month, year);
+                const difference = hours - requiredHours;
+                const percentageDifference = (difference / requiredHours) * 100;
+
+                let warningClass = '';
+                let warningMessage = '';
+                if (Math.abs(percentageDifference) > 20) {
+                    warningClass = 'warning';
+                    warningMessage = percentageDifference > 0 ? 
+                        'Exceso de horas trabajadas' : 
+                        'Déficit de horas trabajadas';
+                }
+
+                doctorSummaryDiv.innerHTML += `
+                    <div class="doctor-hours ${warningClass}">
+                        <strong>${doctor.nombre} ${doctor.apellidos}</strong><br>
+                        Horas trabajadas: ${hours}<br>
+                        Horas requeridas: ${requiredHours}<br>
+                        Diferencia: ${difference} horas (${percentageDifference.toFixed(2)}%)<br>
+                        ${warningMessage ? `<span class="warning">${warningMessage}</span>` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        function calculateDoctorHours(month, year) {
+            const doctorHours = {};
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = formatDate(new Date(year, month, day));
+                if (planning[date]) {
+                    planning[date].forEach(assignment => {
+                        if (assignment.doctor) {
+                            const hours = calculateHours(assignment.inicio, assignment.fin);
+                            doctorHours[assignment.doctor] = (doctorHours[assignment.doctor] || 0) + hours;
+                        }
+                    });
+                }
+            }
+
+            return doctorHours;
+        }
+
+        function calculateRequiredHours(doctor, month, year) {
+            const workingDays = calculateWorkingDays(month, year);
+            if (doctor.tipoContrato === 'horas') {
+                return doctor.horasContratadas;
+            } else if (doctor.tipoContrato === 'porcentaje') {
+                return (workingDays * 7 * doctor.porcentajeContratado) / 100;
+            }
+            return 0;
+        }
+
+        function calculateWorkingDays(month, year) {
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let workingDays = 0;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateString = formatDate(date);
+                if (!isWeekend(date) && !isHoliday(dateString)) {
+                    workingDays++;
+                }
+            }
+            return workingDays;
+        }
+
+        function isHoliday(dateString) {
+            return holidays[dateString] !== undefined;
+        }
+
+        function isWeekend(date) {
+            const day = date.getDay();
+            return day === 0 || day === 6;
+        }
+
+        function formatDate(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function calculateHours(start, end) {
+            const [startHour, startMinute] = start.split(':').map(Number);
+            const [endHour, endMinute] = end.split(':').map(Number);
+            return (endHour - startHour) + (endMinute - startMinute) / 60;
+        }
+
+        function getShiftClass(assignment) {
+            const startHour = parseInt(assignment.inicio.split(':')[0]);
+            if (startHour >= 7 && startHour < 15) return 'morning';
+            if (startHour >= 15 && startHour < 23) return 'afternoon';
+            return 'night';
+        }
+
+        function isFullDayShift(assignment) {
+            return calculateHours(assignment.inicio, assignment.fin) >= 24;
+        }
+
+        function isNightShift(assignment) {
+            const startHour = parseInt(assignment.inicio.split(':')[0]);
+            return startHour >= 23 || startHour < 7;
+        }
+
+        function isMorningShift(assignment) {
+            const startHour = parseInt(assignment.inicio.split(':')[0]);
+            return startHour >= 7 && startHour < 15;
+        }
+
+        window.onload = initializePage;
+
+        // Modal event listeners
+        confirmGenerationBtn.onclick = function() {
+            // Implement logic to confirm generation despite warnings
+            warningModal.style.display = 'none';
+        }
+
+        cancelGenerationBtn.onclick = function() {
+            warningModal.style.display = 'none';
+        }
+
+        // Close modal when clicking on X
+        document.querySelector('.close').onclick = function() {
+            warningModal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target == warningModal) {
+                warningModal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
